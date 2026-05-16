@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客戶管理系統 (Supabase 雲端版)</title>
+    <title>客戶管理系統</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:微軟正黑體}
         body{background:#f5f7fa;padding:20px}
@@ -28,10 +28,10 @@
 <body>
 
 <div class="container">
-    <h1>客戶管理系統（Supabase）</h1>
+    <h1>客戶管理系統</h1>
 
     <div class="form">
-        <input type="hidden" id="editId">
+        <input type="hidden" id="editId" value="">
         <div class="form-group">
             <div class="item"><label>客戶姓名</label><input id="name" placeholder="必填"></div>
             <div class="item"><label>連絡電話</label><input id="phone" placeholder="必填"></div>
@@ -53,85 +53,114 @@
     </table>
 </div>
 
-<!-- 載入 Supabase 套件 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-// ====================== 請填入你的金鑰 ======================
-const SUPABASE_URL = "kqxwjzabeeexqmqjsont";
+// ====================== 已經幫你填好你的金鑰 ======================
+const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
 const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
-// ==========================================================
+// =================================================================
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabaseClient;
 
-// 儲存（新增/編輯）
+window.onload = function() {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    loadList();
+};
+
 async function saveCustomer() {
-    const id = document.getElementById('editId').value;
-    const name = document.getElementById('name').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const company = document.getElementById('company').value.trim();
-    const address = document.getElementById('address').value.trim();
+    let editId = document.getElementById('editId').value.trim();
+    let name = document.getElementById('name').value.trim();
+    let phone = document.getElementById('phone').value.trim();
+    let company = document.getElementById('company').value.trim();
+    let address = document.getElementById('address').value.trim();
 
-    if (!name || !phone) { alert('請填姓名與電話'); return; }
-
-    const data = { name, phone, company, address };
-
-    if (id) {
-        await supabase.from('customers').update(data).eq('id', id);
-        alert('修改完成');
-    } else {
-        await supabase.from('customers').insert([data]);
-        alert('新增完成');
+    if (!name || !phone) {
+        alert('請填寫姓名與聯絡電話');
+        return;
     }
 
-    clearForm();
-    loadList();
+    let postData = { name, phone, company, address };
+
+    try {
+        if (editId) {
+            const { error } = await supabaseClient
+                .from('customers')
+                .update(postData)
+                .eq('id', parseInt(editId));
+            if (error) throw error;
+            alert('修改成功');
+        } else {
+            const { error } = await supabaseClient
+                .from('customers')
+                .insert([postData]);
+            if (error) throw error;
+            alert('新增成功');
+        }
+        clearForm();
+        loadList();
+    } catch (err) {
+        alert('錯誤：' + err.message);
+        console.log(err);
+    }
 }
 
-// 讀取客戶列表
 async function loadList() {
-    const keyword = document.getElementById('search').value.toLowerCase();
-    let { data: list } = await supabase.from('customers').select('*').order('id', { ascending: false });
+    if (!supabaseClient) return;
 
-    const filtered = list.filter(c =>
-        c.name.toLowerCase().includes(keyword) ||
-        c.phone.toLowerCase().includes(keyword) ||
-        (c.company && c.company.toLowerCase().includes(keyword))
-    );
+    let key = document.getElementById('search').value.toLowerCase();
+    const { data, error } = await supabaseClient
+        .from('customers')
+        .select('*')
+        .order('id', { ascending: false });
 
-    const html = filtered.map(c => `
-        <tr>
-            <td>${c.name}</td>
-            <td>${c.phone}</td>
-            <td>${c.company || '-'}</td>
-            <td>${c.address || '-'}</td>
+    if (error) return;
+
+    let list = data;
+    if (key) {
+        list = list.filter(item =>
+            item.name.toLowerCase().includes(key) ||
+            item.phone.toLowerCase().includes(key) ||
+            (item.company && item.company.toLowerCase().includes(key))
+        );
+    }
+
+    let html = '';
+    list.forEach(item => {
+        html += `<tr>
+            <td>${item.name}</td>
+            <td>${item.phone}</td>
+            <td>${item.company || '-'}</td>
+            <td>${item.address || '-'}</td>
             <td>
-                <button class="btn btn-edit" onclick="edit('${c.id}','${c.name}','${c.phone}','${c.company}','${c.address}')">編輯</button>
-                <button class="btn btn-del" onclick="del(${c.id})">刪除</button>
+                <button class="btn btn-edit" onclick="editInfo(${item.id})">編輯</button>
+                <button class="btn btn-del" onclick="delInfo(${item.id})">刪除</button>
             </td>
-        </tr>
-    `).join('');
-
+        </tr>`;
+    });
     document.getElementById('tableBody').innerHTML = html;
 }
 
-// 編輯
-function edit(id, name, phone, company, address) {
-    document.getElementById('editId').value = id;
-    document.getElementById('name').value = name;
-    document.getElementById('phone').value = phone;
-    document.getElementById('company').value = company;
-    document.getElementById('address').value = address;
+async function editInfo(id) {
+    const { data } = await supabaseClient
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (!data) return;
+    document.getElementById('editId').value = data.id;
+    document.getElementById('name').value = data.name;
+    document.getElementById('phone').value = data.phone;
+    document.getElementById('company').value = data.company;
+    document.getElementById('address').value = data.address;
 }
 
-// 刪除
-async function del(id) {
+async function delInfo(id) {
     if (!confirm('確定刪除？')) return;
-    await supabase.from('customers').delete().eq('id', id);
+    await supabaseClient.from('customers').delete().eq('id', id);
     loadList();
 }
 
-// 清空表單
 function clearForm() {
     document.getElementById('editId').value = '';
     document.getElementById('name').value = '';
@@ -139,9 +168,6 @@ function clearForm() {
     document.getElementById('company').value = '';
     document.getElementById('address').value = '';
 }
-
-// 頁面啟動
-window.onload = loadList;
 </script>
 </body>
 </html>
