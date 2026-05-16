@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客戶管理系統(資料庫版)</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:微軟正黑體}
+        body{background:#f4f6f9;padding:20px}
+        .box{max-width:1100px;margin:0 auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 0 10px #ddd}
+        h1{text-align:center;margin-bottom:25px;color:#222}
+        .form-box{background:#f8f9fa;padding:20px;border-radius:8px;margin-bottom:20px}
+        .row{display:flex;flex-wrap:wrap;gap:15px;margin-bottom:15px}
+        .item{flex:1;min-width:200px}
+        label{display:block;margin-bottom:6px;font-weight:bold}
+        input{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px}
+        button{padding:9px 18px;border:none;border-radius:5px;cursor:pointer}
+        .btn-save{background:#2b8def;color:#fff}
+        .btn-edit{background:#28a745;color:#fff}
+        .btn-del{background:#dc3545;color:#fff}
+        .search{margin:15px 0}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th,td{border:1px solid #eee;padding:12px;text-align:center}
+        th{background:#333;color:#fff}
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>客戶管理系統</h1>
+    <div class="form-box">
+        <input type="hidden" id="cid">
+        <div class="row">
+            <div class="item">
+                <label>客戶姓名</label>
+                <input type="text" id="name" placeholder="輸入姓名">
+            </div>
+            <div class="item">
+                <label>聯絡電話</label>
+                <input type="text" id="phone" placeholder="輸入電話">
+            </div>
+        </div>
+        <div class="row">
+            <div class="item">
+                <label>公司名稱</label>
+                <input type="text" id="company" placeholder="輸入公司">
+            </div>
+            <div class="item">
+                <label>通訊地址</label>
+                <input type="text" id="address" placeholder="輸入地址">
+            </div>
+        </div>
+        <button class="btn-save" onclick="saveData()">儲存資料</button>
+    </div>
+
+    <div class="search">
+        <input style="width:300px" type="text" id="key" placeholder="搜尋姓名/電話/公司">
+        <button onclick="getList()">搜尋</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>公司</th>
+                <th>地址</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+</div>
+
+<script>
+// 儲存新增/修改
+function saveData(){
+    let id = document.getElementById('cid').value;
+    let name = document.getElementById('name').value;
+    let phone = document.getElementById('phone').value;
+    let company = document.getElementById('company').value;
+    let address = document.getElementById('address').value;
+    if(!name||!phone){alert('請填寫姓名與電話');return;}
+
+    let url = id ? 'edit.php' : 'add.php';
+    let form = new FormData();
+    if(id)form.append('id',id);
+    form.append('name',name);
+    form.append('phone',phone);
+    form.append('company',company);
+    form.append('address',address);
+
+    fetch(url,{method:'POST',body:form})
+    .then(res=>res.text())
+    .then(txt=>{
+        if(txt=='ok'){
+            alert('儲存成功');
+            clearForm();
+            getList();
+        }else{
+            alert('儲存失敗');
+        }
+    })
+}
+
+// 清空表單
+function clearForm(){
+    document.getElementById('cid').value='';
+    document.getElementById('name').value='';
+    document.getElementById('phone').value='';
+    document.getElementById('company').value='';
+    document.getElementById('address').value='';
+}
+
+// 載入列表
+function getList(){
+    fetch('list.php')
+    .then(res=>res.json())
+    .then(arr=>{
+        let key = document.getElementById('key').value.trim();
+        let html = '';
+        arr.forEach(v=>{
+            if(key && !v.name.includes(key)&&!v.phone.includes(key)&&!v.company.includes(key))return;
+            html += `<tr>
+                <td>${v.id}</td>
+                <td>${v.name}</td>
+                <td>${v.phone}</td>
+                <td>${v.company||''}</td>
+                <td>${v.address||''}</td>
+                <td>
+                    <button class="btn-edit" onclick="editData(${v.id},'${v.name}','${v.phone}','${v.company}','${v.address}')">編輯</button>
+                    <button class="btn-del" onclick="delData(${v.id})">刪除</button>
+                </td>
+            </tr>`;
+        })
+        document.getElementById('tbody').innerHTML=html;
+    })
+}
+
+// 編輯填入
+function editData(id,name,phone,company,address){
+    document.getElementById('cid').value=id;
+    document.getElementById('name').value=name;
+    document.getElementById('phone').value=phone;
+    document.getElementById('company').value=company;
+    document.getElementById('address').value=address;
+}
+
+// 刪除
+function delData(id){
+    if(!confirm('確定刪除？'))return;
+    let form=new FormData();
+    form.append('id',id);
+    fetch('del.php',{method:'POST',body:form})
+    .then(res=>res.text())
+    .then(t=>{
+        if(t=='ok'){
+            alert('刪除成功');
+            getList();
+        }
+    })
+}
+
+window.onload=getList;
+</script>
+</body>
+</html>
