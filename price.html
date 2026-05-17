@@ -3,170 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>報價單系統</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>報價系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
-<!-- 登入介面 -->
-<div id="login" class="d-flex vh-100 justify-content-center align-items-center">
-  <div class="card p-4" style="width:400px">
-    <h3 class="text-center mb-3">登入</h3>
-    <input class="form-control mb-2" id="email" placeholder="信箱">
-    <input class="form-control mb-2" id="pw" placeholder="密碼" type="password">
-    <button class="btn btn-primary w-100 mb-2" onclick="loginFunc()">登入</button>
-    <button class="btn btn-outline-secondary w-100" onclick="regFunc()">註冊</button>
+<div id="loginBox" class="d-flex vh-100 justify-content-center align-items-center">
+  <div class="card p-4" style="width:420px">
+    <h3 class="text-center mb-3">系統登入-5</h3>
+    <input class="form-control mb-2" id="loginEmail" placeholder="輸入信箱">
+    <input class="form-control mb-2" id="loginPw" placeholder="輸入密碼" type="password">
+    <button class="btn btn-primary w-100 mb-2" onclick="userLogin()">登入</button>
+    <button class="btn btn-outline-secondary w-100" onclick="goRegister()">註冊</button>
   </div>
 </div>
 
-<!-- 主程式介面 -->
-<div id="app" class="d-none container py-4">
+<div id="mainApp" class="d-none container py-4">
   <div class="d-flex justify-content-between mb-3">
-    <h4>報價單系統</h4>
-    <button class="btn btn-danger btn-sm" onclick="logoutFunc()">登出</button>
+    <h4>報價單管理系統</h4>
+    <button class="btn btn-danger btn-sm" onclick="userLogout()">登出</button>
   </div>
-  <ul class="nav nav-tabs mb-3">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#cust">客戶</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#supp">廠商</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prod">商品</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#quote">報價單</a></li>
-  </ul>
-  <div class="tab-content">
-    <div id="cust" class="tab-pane active"></div>
-    <div id="supp" class="tab-pane"></div>
-    <div id="prod" class="tab-pane"></div>
-    <div id="quote" class="tab-pane">
-      <button class="btn btn-sm btn-success mb-2" onclick="newQuote()">新增報價單</button>
-      <div id="listQuote"></div>
+  <button class="btn btn-success mb-3" onclick="createQuote()">新增報價單</button>
+  <div id="quoteList"></div>
+</div>
+
+<div class="modal fade" id="commonModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div id="modalContent"></div>
     </div>
   </div>
 </div>
 
-<!-- 彈窗 -->
-<div class="modal fade" id="md">
-  <div class="modal-dialog"><div class="modal-content"><div id="mdBody"></div></div></div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ============== 填入你的 Supabase 資訊 ==============
+// ===================== 填入你的資訊 =====================
 const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
 const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
-// ====================================================
+// ======================================================
 
-// 初始化（放在最前面，絕對不會報錯）
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const modal = new bootstrap.Modal("#md");
-let currentUser = null;
+// 全域初始化 (唯一一份，絕對不重複)
+const mySupabase = supabase.createClient(MY_URL, MY_KEY);
+const myModal = new bootstrap.Modal("#commonModal");
+let loginUser = null;
 
-// 頁面載入
+// 頁面啟動
 window.onload = async () => {
-  const { data } = await supabase.auth.getUser();
+  const { data } = await mySupabase.auth.getUser();
   if (data.user) {
-    currentUser = data.user;
-    document.getElementById('login').classList.add('d-none');
-    document.getElementById('app').classList.remove('d-none');
+    loginUser = data.user;
+    loginBox.classList.add("d-none");
+    mainApp.classList.remove("d-none");
   }
 };
 
 // 登入
-async function loginFunc() {
-  const email = document.getElementById('email').value;
-  const pw = document.getElementById('pw').value;
-  const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-  if (error) alert(error.message);
-  else location.reload();
+async function userLogin() {
+  const { error } = await mySupabase.auth.signInWithPassword({
+    email: loginEmail.value,
+    password: loginPw.value
+  });
+  error ? alert(error.message) : location.reload();
 }
 
-// 註冊
-function regFunc() {
-  document.getElementById("login").innerHTML = `
-  <div class="card p-4" style="width:400px">
-    <h3>註冊</h3>
+// 前往註冊
+function goRegister() {
+  loginBox.innerHTML = `
+  <div class="card p-4" style="width:420px">
+    <h3>會員註冊</h3>
     <input class="form-control mb-2" id="regEmail" placeholder="信箱">
-    <input class="form-control mb-2" id="regPw" placeholder="密碼">
-    <button class="btn btn-success w-100" onclick="doRegFunc()">註冊</button>
+    <input class="form-control mb-2" id="regPw" placeholder="密碼(至少6碼)">
+    <button class="btn btn-success w-100" onclick="userRegister()">註冊</button>
   </div>`;
 }
 
-async function doRegFunc() {
-  const email = document.getElementById('regEmail').value;
-  const pw = document.getElementById('regPw').value;
-  const { error } = await supabase.auth.signUp({ email, password: pw });
-  if (error) alert(error.message);
-  else alert("註冊成功！請登入");
+// 執行註冊
+async function userRegister() {
+  const { error } = await mySupabase.auth.signUp({
+    email: regEmail.value,
+    password: regPw.value
+  });
+  error ? alert(error.message) : alert("註冊成功！請登入");
 }
 
 // 登出
-async function logoutFunc() {
-  await supabase.auth.signOut();
+async function userLogout() {
+  await mySupabase.auth.signOut();
   location.reload();
 }
 
 // 報價單功能
-let quoteItems = [];
+let items = [];
 
-async function newQuote() {
-  // 取得客戶/廠商/商品
-  const { data: customers } = await supabase.from("customers").select("id,name");
-  const { data: suppliers } = await supabase.from("suppliers").select("id,name");
-  const { data: products } = await supabase.from("products").select("*");
+async function createQuote() {
+  items = [];
+  const { data: cust } = await mySupabase.from("customers").select("id,name");
+  const { data: supp } = await mySupabase.from("suppliers").select("id,name");
 
-  document.getElementById('mdBody').innerHTML = `
-  <div class="modal-header"><h5>新增報價單</h5></div>
-  <div class="modal-body">
+  modalContent.innerHTML = `
+  <div class="modal-header"><h5>建立報價單</h5></div>
+  <div class="modal-body p-3">
     <input class="form-control mb-2" id="quoteNo" value="Q${Date.now()}" readonly>
-    <select class="form-control mb-2" id="customerId">
-      ${customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-    </select>
-    <select class="form-control mb-2" id="supplierId">
-      ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-    </select>
+    <select class="form-control mb-2" id="custId">${cust.map(i=>`<option value="${i.id}">${i.name}</option>`)}</select>
+    <select class="form-control mb-2" id="suppId">${supp.map(i=>`<option value="${i.id}">${i.name}</option>`)}</select>
+    
     <div class="input-group mb-2">
       <input class="form-control" id="pName" placeholder="商品名稱">
-      <input class="form-control" id="pQty" value="1" type="number">
+      <input class="form-control" id="pQty" type="number" value="1">
       <input class="form-control" id="pPrice" placeholder="單價">
-      <button class="btn btn-primary" onclick="addItem()">加入</button>
+      <button class="btn btn-primary" onclick="addQuoteItem()">加入</button>
     </div>
-    <div id="itemList"></div>
-    <div class="text-end" id="total">總金額：0</div>
+
+    <div id="itemBox"></div>
+    <div class="text-end fs-5 mt-2" id="totalBox">總金額：0</div>
   </div>
-  <div class="modal-footer"><button class="btn btn-success" onclick="saveQuote()">儲存</button></div>`;
-  modal.show();
+  <div class="modal-footer">
+    <button class="btn btn-success" onclick="saveQuoteToDB()">儲存</button>
+  </div>`;
+  myModal.show();
+  refreshTotal();
 }
 
-function addItem() {
-  const name = document.getElementById('pName').value;
-  const qty = Number(document.getElementById('pQty').value);
-  const price = Number(document.getElementById('pPrice').value);
+function addQuoteItem() {
+  const name = pName.value;
+  const qty = Number(pQty.value);
+  const price = Number(pPrice.value);
   if (!name || !price) return;
-  quoteItems.push({ name, qty, price, sub: qty * price });
-  calcTotal();
+  items.push({ name, qty, price, sub: qty * price });
+  refreshTotal();
 }
 
-function calcTotal() {
-  let total = 0;
+function refreshTotal() {
   let html = "";
-  quoteItems.forEach(item => {
-    total += item.sub;
-    html += `<div>${item.name} x ${item.qty} = ${item.sub}</div>`;
-  });
-  document.getElementById('itemList').innerHTML = html;
-  document.getElementById('total').innerText = "總金額：" + total;
+  let total = 0;
+  items.forEach(i => { total += i.sub; html += `<div>${i.name} × ${i.qty} = ${i.sub}</div>`; });
+  itemBox.innerHTML = html;
+  totalBox.innerText = "總金額：" + total;
 }
 
-// 儲存報價單（有錯必提示）
-async function saveQuote() {
-  const total = quoteItems.reduce((a, b) => a + b.sub, 0);
-  
-  // 儲存主檔
-  const { data, error } = await supabase.from("quotations").insert([{
-    quote_no: document.getElementById('quoteNo').value,
-    customer_id: document.getElementById('customerId').value,
-    supplier_id: document.getElementById('supplierId').value,
+// 儲存到資料庫 (有錯必提示)
+async function saveQuoteToDB() {
+  const total = items.reduce((a,b)=>a+b.sub,0);
+
+  // 儲存報價單
+  const { data, error } = await mySupabase.from("quotations").insert([{
+    quote_no: quoteNo.value,
+    customer_id: custId.value,
+    supplier_id: suppId.value,
     total_amount: total,
-    user_id: currentUser.id
+    user_id: loginUser.id
   }]).select();
 
   if (error) {
@@ -175,19 +161,19 @@ async function saveQuote() {
   }
 
   // 儲存明細
-  await supabase.from("quotation_items").insert(
-    quoteItems.map(i => ({
+  await mySupabase.from("quotation_items").insert(
+    items.map(i => ({
       quotation_id: data[0].id,
       product_name: i.name,
       quantity: i.qty,
       unit_price: i.price,
       subtotal: i.sub,
-      user_id: currentUser.id
+      user_id: loginUser.id
     }))
   );
 
-  alert("儲存成功！");
-  modal.hide();
+  alert("✅ 儲存成功！");
+  myModal.hide();
 }
 </script>
 </body>
