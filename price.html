@@ -28,7 +28,7 @@
 <!-- 主系統 -->
 <div id="mainPanel" class="container py-3 d-none">
   <div class="d-flex justify-content-between mb-2">
-    <h4>📋 <<銀河資訊>>報價管理系統</h4>
+    <h4>📋 報價管理系統</h4>
     <div>
       <span id="userEmail" class="me-2"></span>
       <button class="btn btn-sm btn-danger" onclick="logout()">登出</button>
@@ -118,7 +118,8 @@ async function login() {
     email: email.value,
     password: password.value
   });
-  if (error) alert(error.message); else location.reload();
+  if (error) alert("登入錯誤：" + error.message); 
+  else location.reload();
 }
 
 async function logout() {
@@ -130,18 +131,37 @@ function showRegister() {
   loginForm.innerHTML = `
     <h5>註冊帳號</h5>
     <input class="form-control mb-2" id="rEmail" type="email" placeholder="信箱">
-    <input class="form-control mb-2" id="rPassword" type="password" placeholder="密碼">
+    <input class="form-control mb-2" id="rPassword" type="password" placeholder="密碼（至少6碼）">
     <button class="btn btn-success w-100 mb-2" onclick="register()">註冊</button>
     <button class="btn w-100 btn-sm" onclick="location.reload()">返回</button>
   `;
 }
 
+// 【修正版】註冊函數（有錯一定提示）
 async function register() {
-  const { error } = await supabase.auth.signUp({
-    email: rEmail.value,
-    password: rPassword.value
+  const email = rEmail.value.trim();
+  const password = rPassword.value.trim();
+
+  if (!email || !password) {
+    alert("請輸入信箱與密碼！");
+    return;
+  }
+  if (password.length < 6) {
+    alert("密碼至少6位！");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password
   });
-  if (error) alert(error.message); else alert("註冊成功，請登入");
+
+  if (error) {
+    alert("註冊失敗：" + error.message);
+  } else {
+    alert("註冊成功！現在可以登入");
+    location.reload();
+  }
 }
 
 // 工具
