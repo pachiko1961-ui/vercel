@@ -4,27 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>報價系統</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
 <div id="loginBox" class="d-flex vh-100 justify-content-center align-items-center">
   <div class="card p-4" style="width:420px">
-    <h3 class="text-center mb-3">系統登入-6</h3>
-    <input class="form-control mb-2" id="loginEmail" placeholder="輸入信箱">
-    <input class="form-control mb-2" id="loginPw" placeholder="輸入密碼" type="password">
+    <h3 class="text-center mb-3">系統登入</h3>
+    <input class="form-control mb-2" id="loginEmail" placeholder="信箱">
+    <input class="form-control mb-2" id="loginPw" placeholder="密碼" type="password">
     <button class="btn btn-primary w-100 mb-2" onclick="userLogin()">登入</button>
     <button class="btn btn-outline-secondary w-100" onclick="goRegister()">註冊</button>
   </div>
 </div>
 
 <div id="mainApp" class="d-none container py-4">
-  <div class="d-flex justify-content-between mb-3">
-    <h4>報價單管理系統</h4>
-    <button class="btn btn-danger btn-sm" onclick="userLogout()">登出</button>
-  </div>
+  <h4>報價單系統</h4>
   <button class="btn btn-success mb-3" onclick="createQuote()">新增報價單</button>
-  <div id="quoteList"></div>
 </div>
 
 <div class="modal fade" id="commonModal">
@@ -35,11 +31,11 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==========================================
-// 【唯一要改的地方】直接貼在這裡！
+// 【唯一要填的地方】
 const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
 const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
 // ==========================================
@@ -48,7 +44,7 @@ const client = supabase.createClient(supabaseUrl, supabaseKey);
 const myModal = new bootstrap.Modal("#commonModal");
 let loginUser = null;
 
-window.onload = async () => {
+window.onload = async function () {
   const { data } = await client.auth.getUser();
   if (data.user) {
     loginUser = data.user;
@@ -67,10 +63,10 @@ async function userLogin() {
 
 function goRegister() {
   loginBox.innerHTML = `
-  <div class="card p-4" style="width:420px">
-    <h3>會員註冊</h3>
+  <div class="card p-4">
+    <h3>註冊</h3>
     <input class="form-control mb-2" id="regEmail" placeholder="信箱">
-    <input class="form-control mb-2" id="regPw" placeholder="密碼(至少6碼)">
+    <input class="form-control mb-2" id="regPw" placeholder="密碼">
     <button class="btn btn-success w-100" onclick="userRegister()">註冊</button>
   </div>`;
 }
@@ -83,89 +79,7 @@ async function userRegister() {
   error ? alert(error.message) : alert("註冊成功！請登入");
 }
 
-async function userLogout() {
-  await client.auth.signOut();
-  location.reload();
-}
-
-let items = [];
-
-async function createQuote() {
-  items = [];
-  const { data: cust } = await client.from("customers").select("id,name");
-  const { data: supp } = await client.from("suppliers").select("id,name");
-
-  modalContent.innerHTML = `
-  <div class="modal-header"><h5>建立報價單</h5></div>
-  <div class="modal-body p-3">
-    <input class="form-control mb-2" id="quoteNo" value="Q${Date.now()}" readonly>
-    <select class="form-control mb-2" id="custId">${cust.map(i=>`<option value="${i.id}">${i.name}</option>`)}</select>
-    <select class="form-control mb-2" id="suppId">${supp.map(i=>`<option value="${i.id}">${i.name}</option>`)}</select>
-    
-    <div class="input-group mb-2">
-      <input class="form-control" id="pName" placeholder="商品名稱">
-      <input class="form-control" id="pQty" type="number" value="1">
-      <input class="form-control" id="pPrice" placeholder="單價">
-      <button class="btn btn-primary" onclick="addQuoteItem()">加入</button>
-    </div>
-
-    <div id="itemBox"></div>
-    <div class="text-end fs-5 mt-2" id="totalBox">總金額：0</div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-success" onclick="saveQuoteToDB()">儲存</button>
-  </div>`;
-  myModal.show();
-  refreshTotal();
-}
-
-function addQuoteItem() {
-  const name = pName.value;
-  const qty = Number(pQty.value);
-  const price = Number(pPrice.value);
-  if (!name || !price) return;
-  items.push({ name, qty, price, sub: qty * price });
-  refreshTotal();
-}
-
-function refreshTotal() {
-  let html = "";
-  let total = 0;
-  items.forEach(i => { total += i.sub; html += `<div>${i.name} × ${i.qty} = ${i.sub}</div>`; });
-  itemBox.innerHTML = html;
-  totalBox.innerText = "總金額：" + total;
-}
-
-async function saveQuoteToDB() {
-  const total = items.reduce((a,b)=>a+b.sub,0);
-
-  const { data, error } = await client.from("quotations").insert([{
-    quote_no: quoteNo.value,
-    customer_id: custId.value,
-    supplier_id: suppId.value,
-    total_amount: total,
-    user_id: loginUser.id
-  }]).select();
-
-  if (error) {
-    alert("儲存失敗：" + error.message);
-    return;
-  }
-
-  await client.from("quotation_items").insert(
-    items.map(i => ({
-      quotation_id: data[0].id,
-      product_name: i.name,
-      quantity: i.qty,
-      unit_price: i.price,
-      subtotal: i.sub,
-      user_id: loginUser.id
-    }))
-  );
-
-  alert("✅ 儲存成功！");
-  myModal.hide();
-}
+function createQuote() {}
 </script>
 </body>
 </html>
