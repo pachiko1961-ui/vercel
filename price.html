@@ -10,7 +10,7 @@
 
 <div id="loginBox" class="d-flex vh-100 justify-content-center align-items-center">
   <div class="card p-4" style="width:420px">
-    <h3 class="text-center mb-3">系統登入-5</h3>
+    <h3 class="text-center mb-3">系統登入-6</h3>
     <input class="form-control mb-2" id="loginEmail" placeholder="輸入信箱">
     <input class="form-control mb-2" id="loginPw" placeholder="輸入密碼" type="password">
     <button class="btn btn-primary w-100 mb-2" onclick="userLogin()">登入</button>
@@ -38,19 +38,18 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ===================== 填入你的資訊 =====================
-const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
-const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
-// ======================================================
+// ==========================================
+// 【唯一要改的地方】直接貼在這裡！
+const supabaseUrl = "你的SUPABASE_URL";
+const supabaseKey = "你的ANON_KEY";
+// ==========================================
 
-// 全域初始化 (唯一一份，絕對不重複)
-const mySupabase = supabase.createClient(MY_URL, MY_KEY);
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 const myModal = new bootstrap.Modal("#commonModal");
 let loginUser = null;
 
-// 頁面啟動
 window.onload = async () => {
-  const { data } = await mySupabase.auth.getUser();
+  const { data } = await client.auth.getUser();
   if (data.user) {
     loginUser = data.user;
     loginBox.classList.add("d-none");
@@ -58,16 +57,14 @@ window.onload = async () => {
   }
 };
 
-// 登入
 async function userLogin() {
-  const { error } = await mySupabase.auth.signInWithPassword({
+  const { error } = await client.auth.signInWithPassword({
     email: loginEmail.value,
     password: loginPw.value
   });
   error ? alert(error.message) : location.reload();
 }
 
-// 前往註冊
 function goRegister() {
   loginBox.innerHTML = `
   <div class="card p-4" style="width:420px">
@@ -78,28 +75,25 @@ function goRegister() {
   </div>`;
 }
 
-// 執行註冊
 async function userRegister() {
-  const { error } = await mySupabase.auth.signUp({
+  const { error } = await client.auth.signUp({
     email: regEmail.value,
     password: regPw.value
   });
   error ? alert(error.message) : alert("註冊成功！請登入");
 }
 
-// 登出
 async function userLogout() {
-  await mySupabase.auth.signOut();
+  await client.auth.signOut();
   location.reload();
 }
 
-// 報價單功能
 let items = [];
 
 async function createQuote() {
   items = [];
-  const { data: cust } = await mySupabase.from("customers").select("id,name");
-  const { data: supp } = await mySupabase.from("suppliers").select("id,name");
+  const { data: cust } = await client.from("customers").select("id,name");
+  const { data: supp } = await client.from("suppliers").select("id,name");
 
   modalContent.innerHTML = `
   <div class="modal-header"><h5>建立報價單</h5></div>
@@ -142,12 +136,10 @@ function refreshTotal() {
   totalBox.innerText = "總金額：" + total;
 }
 
-// 儲存到資料庫 (有錯必提示)
 async function saveQuoteToDB() {
   const total = items.reduce((a,b)=>a+b.sub,0);
 
-  // 儲存報價單
-  const { data, error } = await mySupabase.from("quotations").insert([{
+  const { data, error } = await client.from("quotations").insert([{
     quote_no: quoteNo.value,
     customer_id: custId.value,
     supplier_id: suppId.value,
@@ -160,8 +152,7 @@ async function saveQuoteToDB() {
     return;
   }
 
-  // 儲存明細
-  await mySupabase.from("quotation_items").insert(
+  await client.from("quotation_items").insert(
     items.map(i => ({
       quotation_id: data[0].id,
       product_name: i.name,
