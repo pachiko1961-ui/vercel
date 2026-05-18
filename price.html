@@ -108,7 +108,48 @@ async function checkAuth() {
     loadAll();
   }
 }
+// 客戶編輯 - 綁定到window
+window.editCustomer = async function(id){
+  show(`<div class="modal-header"><h5>${id?"編輯":"新增"}客戶</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  <div class="modal-body"><input class="form-control mb-2" id="c_name" placeholder="名稱"><input class="form-control mb-2" id="c_contact" placeholder="聯絡人"><input class="form-control mb-2" id="c_phone" placeholder="電話"><textarea class="form-control" id="c_addr" placeholder="地址"></textarea></div>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateCustomer('${id}')`:'saveCustomer()'}">儲存</button></div>`);
+  if(id){
+    const { data } = await sb.from("customers").select("*").eq("id",id).single();
+    c_name.value = data.name; 
+    c_contact.value = data.contact_person||""; 
+    c_phone.value = data.phone||""; 
+    c_addr.value = data.address||"";
+  }
+};
 
+// 廠商編輯 - 綁定到window
+window.editSupplier = async function(id){
+  show(`<div class="modal-header"><h5>${id?"編輯":"新增"}廠商</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  <div class="modal-body"><input class="form-control mb-2" id="s_name" placeholder="名稱"><input class="form-control mb-2" id="s_contact" placeholder="聯絡人"><input class="form-control mb-2" id="s_phone" placeholder="電話"><textarea class="form-control" id="s_addr" placeholder="地址"></textarea></div>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateSupplier('${id}')`:'saveSupplier()'}">儲存</button></div>`);
+  if(id){
+    const { data } = await sb.from("suppliers").select("*").eq("id",id).single();
+    s_name.value = data.name; 
+    s_contact.value = data.contact_person||""; 
+    s_phone.value = data.phone||""; 
+    s_addr.value = data.address||"";
+  }
+};
+
+// 商品編輯 - 綁定到window
+window.editProduct = async function(id){
+  show(`<div class="modal-header"><h5>${id?"編輯":"新增"}商品</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  <div class="modal-body"><input class="form-control mb-2" id="p_code" placeholder="商品代號"><input class="form-control mb-2" id="p_name" placeholder="名稱"><input class="form-control mb-2" id="p_unit" placeholder="單位"><input class="form-control mb-2" id="p_price" type="number" placeholder="售價"><textarea class="form-control" id="p_remark" placeholder="備註"></textarea></div>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateProduct('${id}')`:'saveProduct()'}">儲存</button></div>`);
+  if(id){
+    const { data } = await sb.from("products").select("*").eq("id",id).single();
+    p_code.value = data.product_code; 
+    p_name.value = data.product_name; 
+    p_unit.value = data.unit; 
+    p_price.value = data.sale_price; 
+    p_remark.value = data.remark||"";
+  }
+};
 async function login() {
   const { error } = await sb.auth.signInWithPassword({ email: email.value, password: password.value });
   if (error) alert("登入錯誤："+error.message); else location.reload();
@@ -466,59 +507,6 @@ function clearSearchFields() {
 }
 
 // 修改 loadProductHistory 函數，支援多條件查詢（可選）
-async function loadProductHistory(){
-  const productKey = document.getElementById("searchProduct").value.trim();
-  const dateKey = document.getElementById("searchDate").value.trim();
-  const customerKey = document.getElementById("searchCustomer").value.trim().toLowerCase();
-  
-  if(!productKey && !dateKey && !customerKey){
-    alert("請至少輸入一個查詢條件");
-    return;
-  }
-
-  const b=document.getElementById("historyBody");
-  b.innerHTML="<tr><td colspan='8'>查詢中...</td></tr>";
-
-  // 基礎查詢條件
-  let query = sb.from("quotation_items").select(`
-    product_name,unit,unit_price,quantity,subtotal,
-    quotations(quote_no,quote_date,customer_id)
-  `);
-
-  // 商品名稱過濾
-  if(productKey) {
-    query = query.ilike("product_name", `%${productKey}%`);
-  }
-
-  // 執行查詢
-  const {data:items} = await query;
-  
-  let h="";
-  for(const it of items||[]){
-    const q=it.quotations;
-    
-    // 日期過濾
-    if(dateKey && q.quote_date !== dateKey) continue;
-    
-    // 客戶資訊查詢與過濾
-    const {data:c}=await sb.from("customers").select("name").eq("id",q.customer_id);
-    const customerName = c?.[0]?.name || "-";
-    if(customerKey && !customerName.toLowerCase().includes(customerKey)) continue;
-
-    h+=`<tr>
-      <td>${q.quote_date}</td>
-      <td>${customerName}</td>
-      <td>${it.product_name}</td>
-      <td class="text-end">${it.quantity}</td>
-      <td>${it.unit||"-"}</td>
-      <td class="text-end">${money(it.unit_price)}</td>
-      <td class="text-end">${money(it.subtotal)}</td>
-      <td>${q.quote_no}</td>
-    </tr>`;
-  }
-  
-  b.innerHTML=h||"<tr><td colspan='8' class='text-center'>無資料</td></tr>";
-}
 async function loadProductHistory(){
   const productKeyword = document.getElementById("searchProduct").value.trim().toLowerCase();
   const dateKeyword = document.getElementById("searchDate").value;
