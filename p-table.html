@@ -101,10 +101,13 @@
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
     let currentUser = null;
 
-    // 頁面加載時驗證使用者並載入規格表
+    // 頁面加載時先渲染按鈕，再後台驗證+加載數據
     window.onload = async () => {
+      // 1. 立即渲染按鈕結構（無需等待數據）
+      renderButtonsImmediately();
+      // 2. 後台執行驗證和數據加載（不阻塞畫面）
       await checkAuth();
-      await initSpecTable();
+      await loadButtonDataToDOM();
     };
 
     // 驗證使用者身份
@@ -123,37 +126,62 @@
       window.close();
     }
 
-    // 初始化按鈕網格 (顯示所有20個按鈕)
-    async function initSpecTable() {
+    // 【核心優化】立即渲染所有按鈕（預設名稱），不等待Supabase請求
+    function renderButtonsImmediately() {
       const gridContainer = document.getElementById('specGrid');
       gridContainer.innerHTML = "";
 
-      // 建立20個按鈕 (1-20)
+      // 建立20個按鈕 (1-20) - 立即渲染
       for (let btnNum = 1; btnNum <= 20; btnNum++) {
-        // 建立按鈕元素
         const btn = document.createElement('button');
         btn.className = "btn btn-primary spec-btn";
         btn.id = `specBtn-${btnNum}`;
+        // 預設顯示名稱（立即顯示）
+        btn.textContent = `按鈕 ${btnNum}`;
         
-        // 左鍵點擊開啟網址
+        // 綁定事件（和原邏輯一致）
         btn.onclick = () => openButtonUrl(btnNum);
-        // 右鍵點擊開啟編輯彈窗 (阻止預設右鍵選單)
         btn.oncontextmenu = (e) => {
           e.preventDefault();
           openButtonEdit(btnNum);
           return false;
         };
         
-        // 載入按鈕資料
-        const btnData = await getButtonData(btnNum);
-        btn.textContent = btnData?.name || `按鈕 ${btnNum}`;
-        
         gridContainer.appendChild(btn);
       }
     }
 
-    // 從Supabase取得按鈕資料
+    // 後台加載按鈕數據並更新DOM
+    async function loadButtonDataToDOM() {
+      if (!currentUser) return; // 未登入則跳過
+
+      // 批量獲取所有按鈕數據（一次請求替代20次，進一步優化速度）
+      const { data: allBtnData, error } = await sb
+        .from("spec_buttons")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .in("button_number", Array.from({length:20}, (_,i)=>i+1)); // 1-20
+
+      if (error && error.code !== "PGRST116") {
+        console.error("批量取得按鈕資料失敗：", error);
+        return;
+      }
+
+      // 將數據映射到對應按鈕
+      if (allBtnData && allBtnData.length) {
+        allBtnData.forEach(btnData => {
+          const btnElement = document.getElementById(`specBtn-${btnData.button_number}`);
+          if (btnElement) {
+            btnElement.textContent = btnData.name || `按鈕 ${btnData.button_number}`;
+          }
+        });
+      }
+    }
+
+    // 獲取單個按鈕數據（供點擊/編輯使用）
     async function getButtonData(btnNum) {
+      if (!currentUser) return null;
+      
       try {
         const { data, error } = await sb
           .from("spec_buttons")
@@ -162,7 +190,7 @@
           .eq("user_id", currentUser.id)
           .single();
 
-        if (error && error.code !== "PGRST116") { // PGRST116 = 無資料
+        if (error && error.code !== "PGRST116") {
           console.error("取得按鈕資料失敗：", error);
         }
         return data || null;
@@ -174,17 +202,14 @@
 
     // 開啟按鈕編輯彈窗
     async function openButtonEdit(btnNum) {
-      // 設定彈窗標題
       document.getElementById('modalTitle').textContent = `編輯按鈕 #${btnNum}`;
       document.getElementById('btnId').value = btnNum;
 
-      // 載入當前按鈕資料
       const btnData = await getButtonData(btnNum);
       document.getElementById('btnName').value = btnData?.name || `按鈕 ${btnNum}`;
       document.getElementById('btnContent').value = btnData?.content || "";
       document.getElementById('btnUrl').value = btnData?.url || "";
 
-      // 開啟彈窗
       editModal.show();
     }
 
@@ -192,10 +217,8 @@
     async function openButtonUrl(btnNum) {
       const btnData = await getButtonData(btnNum);
       if (btnData?.url) {
-        // 開啟新視窗跳轉到設定的網址
         window.open(btnData.url, '_blank');
       } else {
-        // 若未設定網址，提示使用者並開啟編輯彈窗
         if (confirm("此按鈕尚未設定網址！是否立即設定？")) {
           openButtonEdit(btnNum);
         }
@@ -215,19 +238,16 @@
       }
 
       try {
-        // 檢查是否已有該按鈕資料
         const existingData = await getButtonData(btnNum);
         
         let response;
         if (existingData) {
-          // 更新既有資料
           response = await sb
             .from("spec_buttons")
             .update({ name, content, url, updated_at: new Date().toISOString() })
             .eq("id", existingData.id)
             .eq("user_id", currentUser.id);
         } else {
-          // 新增新資料
           response = await sb
             .from("spec_buttons")
             .insert([{
@@ -248,7 +268,6 @@
         // 更新畫面按鈕顯示
         document.getElementById(`specBtn-${btnNum}`).textContent = name;
         
-        // 關閉彈窗並提示
         editModal.hide();
         alert("儲存成功！");
 
