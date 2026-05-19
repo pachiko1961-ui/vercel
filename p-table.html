@@ -1,312 +1,262 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>引力粒子系統 - 超交互版</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            overflow: hidden;
-            background: linear-gradient(135deg, #050118, #0a0430, #000000);
-            height: 100vh;
-            cursor: default;
-        }
-        #particleCanvas {
-            display: block;
-            position: fixed;
-            top: 0;
-            left: 0;
-        }
-
-        /* 小小的觸發按鈕 */
-        #toggleBtn {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            color: #4a90e2;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 999;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        /* 選單面板 - 預設隱藏 */
-        .controls {
-            position: fixed;
-            top: 40px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.85);
-            border-radius: 6px;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            z-index: 999;
-            width: 200px;
-            font-size: 11px;
-            backdrop-filter: blur(3px);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 8px 10px;
-            display: none;
-        }
-        .control-item {
-            margin: 6px 0;
-        }
-        label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 3px;
-            font-size: 11px;
-        }
-        input[type="range"] {
-            width: 100%;
-            height: 5px;
-            accent-color: #4a90e2;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>規格表管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .spec-btn {
+      width: 100%;
+      height: 120px;
+      white-space: normal;
+      word-wrap: break-word;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    .edit-modal .form-control {
+      margin-bottom: 10px;
+    }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      width: 100%;
+    }
+    /* 響應式調整：不同螢幕尺寸自動調整列數 */
+    @media (max-width: 576px) {
+      .btn-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .spec-btn {
+        height: 100px;
+      }
+    }
+    @media (min-width: 577px) and (max-width: 992px) {
+      .btn-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (min-width: 993px) {
+      .btn-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+  </style>
 </head>
-<body>
-<canvas id="particleCanvas"></canvas>
+<body class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>📋 規格表管理</h3>
+    <button class="btn btn-sm btn-outline-secondary" onclick="logout()">返回系統</button>
+  </div>
 
-<div id="toggleBtn">選項</div>
+  <!-- 響應式按鈕網格 - 顯示所有按鈕 -->
+  <div class="mb-4">
+    <div id="specGrid" class="btn-grid"></div>
+  </div>
 
-<div class="controls" id="controlPanel">
-    <div class="control-item">
-        <label>吸引力：<span id="attractValue">0.06</span></label>
-        <input type="range" id="attractSlider" min="0.01" max="0.2" step="0.01" value="0.06">
+  <!-- 編輯按鈕的彈窗 -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content edit-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">編輯按鈕 #1</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="btnId">
+          <div class="mb-2">
+            <label class="form-label">按鈕名稱</label>
+            <input type="text" class="form-control" id="btnName" placeholder="輸入按鈕顯示名稱">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">按鈕內容</label>
+            <textarea class="form-control" id="btnContent" rows="3" placeholder="輸入按鈕詳細內容"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">連結網址</label>
+            <input type="url" class="form-control" id="btnUrl" placeholder="輸入完整網址 (http://...)">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" onclick="saveButtonData()">儲存</button>
+        </div>
+      </div>
     </div>
-    <div class="control-item">
-        <label>排斥力：<span id="repelValue">0.15</span></label>
-        <input type="range" id="repelSlider" min="0.05" max="0.3" step="0.01" value="0.15">
-    </div>
-    <div class="control-item">
-        <label>引力範圍：<span id="radiusValue">130</span></label>
-        <input type="range" id="radiusSlider" min="50" max="300" step="5" value="130">
-    </div>
-    <div class="control-item">
-        <label>飄浮速度：<span id="speedValue">0.7</span></label>
-        <input type="range" id="speedSlider" min="0.1" max="2" step="0.1" value="0.7">
-    </div>
-    <div class="control-item">
-        <label>粒子慣性：<span id="inertiaValue">0.95</span></label>
-        <input type="range" id="inertiaSlider" min="0.8" max="0.99" step="0.01" value="0.95">
-    </div>
-    <div class="control-item">
-        <label>連線距離：<span id="lineValue">90</span></label>
-        <input type="range" id="lineSlider" min="30" max="200" step="5" value="90">
-    </div>
-    <div class="control-item">
-        <label>粒子數量：<span id="countValue">200</span></label>
-        <input type="range" id="countSlider" min="100" max="1000" step="20" value="200">
-    </div>
-</div>
+  </div>
 
-<script>
-    const CONFIG = {
-        particleCount: 200,
-        attractForce: 0.06,
-        repelForce: 0.15,
-        mouseRadius: 130,
-        particleSpeed: 0.7,
-        inertia: 0.95,
-        lineDistance: 90
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    // ===================== 請填入你的 SUPABASE 資訊 =====================
+    const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
+    // ==================================================================
+
+    // 初始化Supabase
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    let currentUser = null;
+
+    // 頁面加載時驗證使用者並載入規格表
+    window.onload = async () => {
+      await checkAuth();
+      await initSpecTable();
     };
 
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
-    let canvasWidth = window.innerWidth;
-    let canvasHeight = window.innerHeight;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    const mouse = {
-        x: canvasWidth / 2,
-        y: canvasHeight / 2,
-        radius: CONFIG.mouseRadius,
-        isDown: false
-    };
-
-    // 鼠标按下 / 松开
-    window.addEventListener('mousedown', () => { mouse.isDown = true; });
-    window.addEventListener('mouseup', () => { mouse.isDown = false; });
-
-    // 点击爆炸效果
-    window.addEventListener('click', (e) => {
-        particles.forEach(p => {
-            const dx = p.x - e.clientX;
-            const dy = p.y - e.clientY;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 120) {
-                p.vx = (dx / dist) * 3;
-                p.vy = (dy / dist) * 3;
-            }
-        });
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-    });
-
-    window.addEventListener('resize', () => {
-        canvasWidth = window.innerWidth;
-        canvasHeight = window.innerHeight;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-    });
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * canvasWidth;
-            this.y = Math.random() * canvasHeight;
-            this.vx = (Math.random() - 0.5) * CONFIG.particleSpeed;
-            this.vy = (Math.random() - 0.5) * CONFIG.particleSpeed;
-            this.size = Math.random() * 2.5 + 1.2;
-            this.baseSize = this.size;
-            this.hue = Math.random() * 360;
-            this.color = `hsl(${this.hue}, 100%, 75%)`;
-        }
-
-        update() {
-            const dx = mouse.x - this.x;
-            const dy = mouse.y - this.y;
-            const distance = Math.hypot(dx, dy);
-
-            // 鼠标按住 = 超强吸引
-            const forceMult = mouse.isDown ? 2.5 : 1;
-
-            if (distance < mouse.radius) {
-                const force = (mouse.radius - distance) / mouse.radius;
-                
-                if (distance > 25) {
-                    this.vx += dx * force * CONFIG.attractForce * forceMult;
-                    this.vy += dy * force * CONFIG.attractForce * forceMult;
-                    this.size = this.baseSize * 1.3;
-                } else {
-                    this.vx -= dx * force * CONFIG.repelForce;
-                    this.vy -= dy * force * CONFIG.repelForce;
-                    this.size = this.baseSize * 0.8;
-                }
-            } else {
-                this.size = this.baseSize;
-            }
-
-            // 动态变色
-            this.hue += 0.3;
-            this.color = `hsl(${this.hue}, 100%, 75%)`;
-
-            this.vx *= CONFIG.inertia;
-            this.vy *= CONFIG.inertia;
-            this.x += this.vx;
-            this.y += this.vy;
-
-            if (this.x < 0 || this.x > canvasWidth) this.vx *= -0.8;
-            if (this.y < 0 || this.y > canvasHeight) this.vy *= -0.8;
-        }
-
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.shadowBlur = 18;
-            ctx.shadowColor = this.color;
-            ctx.fill();
-        }
+    // 驗證使用者身份
+    async function checkAuth() {
+      const { data } = await sb.auth.getUser();
+      if (!data.user) {
+        alert("請先登入系統！");
+        window.close(); // 關閉當前視窗返回登入頁
+        return;
+      }
+      currentUser = data.user;
     }
 
-    let particles = [];
-    function initParticles() {
-        particles = [];
-        for (let i = 0; i < CONFIG.particleCount; i++) {
-            particles.push(new Particle());
-        }
+    // 返回主系統
+    function logout() {
+      window.close();
     }
 
-    function connectParticles() {
-        ctx.shadowBlur = 0;
-        for (let a = 0; a < particles.length; a++) {
-            for (let b = a + 1; b < particles.length; b++) {
-                const dx = particles[a].x - particles[b].x;
-                const dy = particles[a].y - particles[b].y;
-                const distance = Math.hypot(dx, dy);
-                
-                if (distance < CONFIG.lineDistance) {
-                    const opacity = 1 - (distance / CONFIG.lineDistance);
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.55})`;
-                    ctx.lineWidth = 0.35;
-                    ctx.beginPath();
-                    ctx.moveTo(particles[a].x, particles[a].y);
-                    ctx.lineTo(particles[b].x, particles[b].y);
-                    ctx.stroke();
-                }
-            }
-        }
-    }
+    // 初始化按鈕網格 (顯示所有20個按鈕)
+    async function initSpecTable() {
+      const gridContainer = document.getElementById('specGrid');
+      gridContainer.innerHTML = "";
 
-    function animate() {
-        ctx.clearRect(0,0,canvasWidth,canvasHeight);
-        ctx.fillStyle = 'rgba(5,1,24,0.08)';
-        ctx.fillRect(0,0,canvasWidth,canvasHeight);
+      // 建立20個按鈕 (1-20)
+      for (let btnNum = 1; btnNum <= 20; btnNum++) {
+        // 建立按鈕元素
+        const btn = document.createElement('button');
+        btn.className = "btn btn-primary spec-btn";
+        btn.id = `specBtn-${btnNum}`;
         
-        particles.forEach(p => {
-            p.update();
-            p.draw();
-        });
+        // 左鍵點擊開啟網址
+        btn.onclick = () => openButtonUrl(btnNum);
+        // 右鍵點擊開啟編輯彈窗 (阻止預設右鍵選單)
+        btn.oncontextmenu = (e) => {
+          e.preventDefault();
+          openButtonEdit(btnNum);
+          return false;
+        };
         
-        connectParticles();
-        requestAnimationFrame(animate);
+        // 載入按鈕資料
+        const btnData = await getButtonData(btnNum);
+        btn.textContent = btnData?.name || `按鈕 ${btnNum}`;
+        
+        gridContainer.appendChild(btn);
+      }
     }
 
-    // 顯示 / 隱藏 選單
-    const btn = document.getElementById('toggleBtn');
-    const panel = document.getElementById('controlPanel');
-    let isOpen = false;
-    btn.onclick = () => {
-        isOpen = !isOpen;
-        panel.style.display = isOpen ? 'block' : 'none';
-    };
+    // 從Supabase取得按鈕資料
+    async function getButtonData(btnNum) {
+      try {
+        const { data, error } = await sb
+          .from("spec_buttons")
+          .select("*")
+          .eq("button_number", btnNum)
+          .eq("user_id", currentUser.id)
+          .single();
 
-    // 滑桿
-    document.getElementById('attractSlider').addEventListener('input', e => {
-        CONFIG.attractForce = parseFloat(e.target.value);
-        document.getElementById('attractValue').textContent = CONFIG.attractForce.toFixed(2);
-    });
-    document.getElementById('repelSlider').addEventListener('input', e => {
-        CONFIG.repelForce = parseFloat(e.target.value);
-        document.getElementById('repelValue').textContent = CONFIG.repelForce.toFixed(2);
-    });
-    document.getElementById('radiusSlider').addEventListener('input', e => {
-        CONFIG.mouseRadius = parseInt(e.target.value);
-        mouse.radius = CONFIG.mouseRadius;
-        document.getElementById('radiusValue').textContent = CONFIG.mouseRadius;
-    });
-    document.getElementById('speedSlider').addEventListener('input', e => {
-        CONFIG.particleSpeed = parseFloat(e.target.value);
-        document.getElementById('speedValue').textContent = CONFIG.particleSpeed.toFixed(1);
-    });
-    document.getElementById('inertiaSlider').addEventListener('input', e => {
-        CONFIG.inertia = parseFloat(e.target.value);
-        document.getElementById('inertiaValue').textContent = CONFIG.inertia.toFixed(2);
-    });
-    document.getElementById('lineSlider').addEventListener('input', e => {
-        CONFIG.lineDistance = parseInt(e.target.value);
-        document.getElementById('lineValue').textContent = CONFIG.lineDistance;
-    });
-    document.getElementById('countSlider').addEventListener('input', e => {
-        CONFIG.particleCount = parseInt(e.target.value);
-        document.getElementById('countValue').textContent = CONFIG.particleCount;
-        initParticles();
-    });
+        if (error && error.code !== "PGRST116") { // PGRST116 = 無資料
+          console.error("取得按鈕資料失敗：", error);
+        }
+        return data || null;
+      } catch (err) {
+        console.error("取得按鈕資料異常：", err);
+        return null;
+      }
+    }
 
-    initParticles();
-    animate();
-</script>
+    // 開啟按鈕編輯彈窗
+    async function openButtonEdit(btnNum) {
+      // 設定彈窗標題
+      document.getElementById('modalTitle').textContent = `編輯按鈕 #${btnNum}`;
+      document.getElementById('btnId').value = btnNum;
+
+      // 載入當前按鈕資料
+      const btnData = await getButtonData(btnNum);
+      document.getElementById('btnName').value = btnData?.name || `按鈕 ${btnNum}`;
+      document.getElementById('btnContent').value = btnData?.content || "";
+      document.getElementById('btnUrl').value = btnData?.url || "";
+
+      // 開啟彈窗
+      editModal.show();
+    }
+
+    // 點擊按鈕開啟對應網址
+    async function openButtonUrl(btnNum) {
+      const btnData = await getButtonData(btnNum);
+      if (btnData?.url) {
+        // 開啟新視窗跳轉到設定的網址
+        window.open(btnData.url, '_blank');
+      } else {
+        // 若未設定網址，提示使用者並開啟編輯彈窗
+        if (confirm("此按鈕尚未設定網址！是否立即設定？")) {
+          openButtonEdit(btnNum);
+        }
+      }
+    }
+
+    // 儲存按鈕資料到Supabase
+    async function saveButtonData() {
+      const btnNum = parseInt(document.getElementById('btnId').value);
+      const name = document.getElementById('btnName').value.trim();
+      const content = document.getElementById('btnContent').value.trim();
+      const url = document.getElementById('btnUrl').value.trim();
+
+      if (!name) {
+        alert("請輸入按鈕名稱！");
+        return;
+      }
+
+      try {
+        // 檢查是否已有該按鈕資料
+        const existingData = await getButtonData(btnNum);
+        
+        let response;
+        if (existingData) {
+          // 更新既有資料
+          response = await sb
+            .from("spec_buttons")
+            .update({ name, content, url, updated_at: new Date().toISOString() })
+            .eq("id", existingData.id)
+            .eq("user_id", currentUser.id);
+        } else {
+          // 新增新資料
+          response = await sb
+            .from("spec_buttons")
+            .insert([{
+              button_number: btnNum,
+              name,
+              content,
+              url,
+              user_id: currentUser.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }]);
+        }
+
+        if (response.error) {
+          throw response.error;
+        }
+
+        // 更新畫面按鈕顯示
+        document.getElementById(`specBtn-${btnNum}`).textContent = name;
+        
+        // 關閉彈窗並提示
+        editModal.hide();
+        alert("儲存成功！");
+
+      } catch (err) {
+        console.error("儲存按鈕資料失敗：", err);
+        alert("儲存失敗：" + err.message);
+      }
+    }
+  </script>
 </body>
 </html>
