@@ -24,7 +24,7 @@
 </div>
 
 <div id="mainPanel" class="container py-3 d-none">
-  <!-- 原有導航/面板結構不變 -->
+  <!-- 原有導航/面板結構不變，新增「選項」頁籤 -->
   <div class="d-flex justify-content-between mb-2">
     <h4>📋 報價管理系統</h4>
     <div>
@@ -38,6 +38,8 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#supp">廠商</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prod">商品</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#quote">報價單</a></li>
+    <!-- 新增：選項頁籤 -->
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#options">選項</a></li>
   </ul>
 
   <div class="tab-content">
@@ -77,7 +79,7 @@
     </div>
 
     <!-- 報價單面板不變 -->
-    <div id="quote" class="tab-pane fade show active">
+    <div id="quote" class="tab-pane fade">
       <div class="d-flex justify-content-between mb-2">
         <h5>報價單管理</h5>
         <div>
@@ -102,12 +104,46 @@
         <tbody id="quoteList"></tbody>
       </table>
     </div>
+
+    <!-- 新增：選項頁籤內容 -->
+    <div id="options" class="tab-pane fade">
+      <div class="card p-4 shadow-sm">
+        <h5 class="mb-4">📦 資料庫備份與還原</h5>
+        <div class="d-flex flex-column gap-3">
+          <!-- 匯出按鈕 -->
+          <button class="btn btn-success w-100 py-3" onclick="exportDatabase()">
+            <i class="bi bi-download"></i> 匯出資料庫所有資料
+          </button>
+          
+          <!-- 匯入按鈕與檔案上傳 -->
+          <div class="input-group">
+            <input type="file" class="form-control" id="importFile" accept=".json">
+            <button class="btn btn-primary" onclick="importDatabase()">
+              <i class="bi bi-upload"></i> 匯入資料庫資料
+            </button>
+          </div>
+          
+          <!-- 備份說明 -->
+          <div class="alert alert-info mt-3">
+            <h6>備份說明：</h6>
+            <ul class="mb-0">
+              <li>匯出：將客戶、廠商、商品、報價單所有資料匯出為 JSON 檔案</li>
+              <li>匯入：上傳之前匯出的 JSON 備份檔案進行還原</li>
+              <li>匯入前請確認資料庫狀態，匯入會覆蓋現有資料</li>
+              <li>建議定期備份重要資料，避免遺失</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="modal fade" id="modal"><div class="modal-dialog" id="mdSize"><div class="modal-content" id="mdBody"></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 新增：Bootstrap Icons 用於按鈕圖示 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <script>
 // ===================== 請填入你的 SUPABASE 資訊 =====================
 const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
@@ -131,6 +167,187 @@ async function checkAuth() {
     mainPanel.classList.remove('d-none');
     userEmail.textContent = user.email;
     loadAll();
+  }
+}
+
+// ========== 新增：匯出資料庫資料功能 ==========
+async function exportDatabase() {
+  try {
+    // 顯示載入提示
+    alert("開始匯出資料，請稍候...");
+    
+    // 取得所有資料表的資料
+    const [
+      { data: customers },
+      { data: suppliers },
+      { data: products },
+      { data: quotations },
+      { data: quotation_items }
+    ] = await Promise.all([
+      sb.from("customers").select("*"),
+      sb.from("suppliers").select("*"),
+      sb.from("products").select("*"),
+      sb.from("quotations").select("*"),
+      sb.from("quotation_items").select("*")
+    ]);
+
+    // 組裝備份資料
+    const backupData = {
+      exportTime: new Date().toISOString(),
+      version: "1.0",
+      userId: user.id,
+      data: {
+        customers: customers || [],
+        suppliers: suppliers || [],
+        products: products || [],
+        quotations: quotations || [],
+        quotation_items: quotation_items || []
+      }
+    };
+
+    // 建立下載檔案
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    
+    // 設定檔案名稱（包含日期）
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    a.download = `報價系統備份_${dateStr}.json`;
+    a.href = url;
+    a.click();
+    
+    // 釋放資源
+    URL.revokeObjectURL(url);
+    alert("✅ 資料匯出成功！檔案已下載。");
+    
+  } catch (error) {
+    console.error("匯出失敗：", error);
+    alert("❌ 資料匯出失敗：" + error.message);
+  }
+}
+
+// ========== 新增：匯入資料庫資料功能 ==========
+// 替換原有的清空資料程式碼
+// 錯誤寫法：await sb.from("quotation_items").delete().neq('id', 0);
+// 正確寫法：
+async function importDatabase() {
+  const fileInput = document.getElementById('importFile');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("請先選擇要匯入的備份檔案（JSON格式）");
+    return;
+  }
+
+  const confirmImport = confirm(
+    "⚠️ 警告：匯入操作將覆蓋現有資料庫的所有資料！\n" +
+    "請確保已備份當前資料，並確認匯入檔案來源可靠。\n\n" +
+    "是否繼續匯入？"
+  );
+  if (!confirmImport) return;
+
+  try {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+      try {
+        const backupData = JSON.parse(e.target.result);
+        if (!backupData || !backupData.data) {
+          throw new Error("備份檔案格式錯誤，無法識別");
+        }
+
+        alert("開始匯入資料，請稍候（可能需要數分鐘）...");
+
+        // ========== 修復：正確的批量刪除語法 ==========
+        // 刪除明細表（依賴順序）
+        await sb.from("quotation_items").delete().filter('id', 'not.eq', 0);
+        await sb.from("quotations").delete().filter('id', 'not.eq', 0);
+        await sb.from("products").delete().filter('id', 'not.eq', 0);
+        await sb.from("suppliers").delete().filter('id', 'not.eq', 0);
+        await sb.from("customers").delete().filter('id', 'not.eq', 0);
+
+        // ========== 修復：匯入時移除 id 欄位（避免主键衝突） ==========
+        // 處理客戶資料（移除 id）
+        const customers = backupData.data.customers?.map(item => {
+          const { id, created_at, ...rest } = item;
+          return { ...rest, user_id: user.id }; // 強制綁定當前使用者ID
+        }) || [];
+
+        // 處理廠商資料（移除 id）
+        const suppliers = backupData.data.suppliers?.map(item => {
+          const { id, created_at, ...rest } = item;
+          return { ...rest, user_id: user.id };
+        }) || [];
+
+        // 處理商品資料（移除 id）
+        const products = backupData.data.products?.map(item => {
+          const { id, created_at, ...rest } = item;
+          return { ...rest, user_id: user.id };
+        }) || [];
+
+        // 處理報價單主表（移除 id）
+        const quotations = backupData.data.quotations?.map(item => {
+          const { id, created_at, ...rest } = item;
+          return rest;
+        }) || [];
+
+        // 處理報價單明細（移除 id）
+        const quotation_items = backupData.data.quotation_items?.map(item => {
+          const { id, created_at, ...rest } = item;
+          return rest;
+        }) || [];
+
+        // 匯入資料（依賴順序）
+        if (customers.length > 0) {
+          await sb.from("customers").insert(customers);
+        }
+        if (suppliers.length > 0) {
+          await sb.from("suppliers").insert(suppliers);
+        }
+        if (products.length > 0) {
+          await sb.from("products").insert(products);
+        }
+        if (quotations.length > 0) {
+          await sb.from("quotations").insert(quotations);
+        }
+        if (quotation_items.length > 0) {
+          await sb.from("quotation_items").insert(quotation_items);
+        }
+
+        loadAll();
+        fileInput.value = "";
+        alert("✅ 資料匯入成功！所有資料已更新。");
+        
+      } catch (parseError) {
+        console.error("匯入解析失敗：", parseError);
+        alert("❌ 匯入失敗：" + parseError.message);
+      }
+    };
+
+    reader.readAsText(file);
+
+  } catch (error) {
+    console.error("匯入失敗：", error);
+    alert("❌ 資料匯入失敗：" + error.message);
+  }
+}
+
+// 分批插入函數
+async function batchInsert(table, data, batchSize = 50) {
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
+    await sb.from(table).insert(batch);
+  }
+}
+
+// 使用範例：
+if (customers.length > 0) {
+  await batchInsert("customers", customers);
+}
+catch (error) {
+  if (error.code === '23505') { // 主键重複
+    alert("❌ 部分資料已存在，跳過重複數據繼續匯入");
+  } else {
+    alert("❌ 匯入失敗：" + error.message);
   }
 }
 
