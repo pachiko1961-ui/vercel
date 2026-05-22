@@ -924,9 +924,11 @@ async function loadProductHistory(){
 // 全選/取消全選報價單
 function toggleSelectAllQuotes() {
   const selectAllCheckbox = document.getElementById("selectAllQuotes");
-  const quoteCheckboxes = document.querySelectorAll(".quote-checkbox");
+  const checkboxes = document.querySelectorAll(".quote-checkbox");
   
-  quoteCheckboxes.forEach(checkbox => {
+  selectAllCheckbox.checked = !selectAllCheckbox.checked;
+  
+  checkboxes.forEach(checkbox => {
     checkbox.checked = selectAllCheckbox.checked;
   });
 }
