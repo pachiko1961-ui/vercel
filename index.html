@@ -161,6 +161,7 @@
 <div class="modal fade" id="modal"><div class="modal-dialog" id="mdSize"><div class="modal-content" id="mdBody"></div></div></div>
 
 <!-- 新增匯入舊報價的彈窗 -->
+<!-- 替換原有的匯入舊報價單彈窗 -->
 <div class="modal fade" id="importQuoteModal">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -170,8 +171,12 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label">選擇舊報價單號</label>
-          <select class="form-select" id="importQuoteSelect">
+          <label class="form-label">舊報價單單號</label>
+          <!-- 新增手動輸入框 -->
+          <input type="text" class="form-control mb-2" id="importQuoteNoInput" placeholder="手動輸入報價單單號 (例如：Q24010101)">
+          <div class="form-text text-muted">或從下方選擇已存在的報價單</div>
+          <!-- 保留下拉選單 -->
+          <select class="form-select mt-2" id="importQuoteSelect">
             <option value="">請選擇報價單號</option>
           </select>
         </div>
@@ -338,6 +343,9 @@ function updateQuoteSortIndicators() {
 }
 
 // ========== 新增函數：加載舊報價單列表用於匯入 ==========
+// ========== 修改：加載舊報價單列表用於匯入（增加單號映射） ==========
+let quoteNoToIdMap = {}; // 新增：儲存單號與ID的對應關係
+// 修正：加載舊報價單列表（新增輸入框事件綁定）
 async function loadOldQuotesForImport() {
   try {
     const { data: quotes, error } = await sb.from("quotations")
@@ -349,6 +357,8 @@ async function loadOldQuotesForImport() {
       return;
     }
     
+    // 重置映射表
+    quoteNoToIdMap = {};
     const selectElement = document.getElementById("importQuoteSelect");
     selectElement.innerHTML = '<option value="">請選擇報價單號</option>';
     
@@ -360,7 +370,24 @@ async function loadOldQuotesForImport() {
         
       const customerName = customer?.name || "未知客戶";
       selectElement.innerHTML += `<option value="${quote.id}">${quote.quote_no} (${customerName})</option>`;
+      // 建立單號到ID的映射（大小寫不敏感）
+      quoteNoToIdMap[quote.quote_no.toUpperCase()] = quote.id;
     }
+    
+    // 清空手動輸入框
+    const manualInput = document.getElementById("importQuoteNoInput");
+    manualInput.value = "";
+    
+    // 新增：綁定輸入事件，自動匹配下拉選單
+    manualInput.oninput = function() {
+      const inputVal = this.value.trim().toUpperCase();
+      if (quoteNoToIdMap[inputVal]) {
+        // 自動選中對應的下拉選項
+        selectElement.value = quoteNoToIdMap[inputVal];
+      } else {
+        selectElement.value = ""; // 無匹配則清空下拉選單
+      }
+    };
     
     // 顯示匯入彈窗
     importQuoteModal.show();
@@ -368,14 +395,28 @@ async function loadOldQuotesForImport() {
     console.error("加載舊報價單失敗：", error);
     alert("加載舊報價單失敗，請稍後再試");
   }
-}
-
-// ========== 新增函數：確認匯入舊報價單 ==========
+}// ========== 新增函數：確認匯入舊報價單 ==========
+// 修正：確認匯入舊報價單（支援手動輸入單號）
 async function confirmImportQuote() {
-  const quoteId = document.getElementById('importQuoteSelect').value;
-  if (!quoteId) {
-    alert("請選擇要匯入的報價單");
-    return;
+  // 1. 優先處理手動輸入的報價單號
+  const manualQuoteNo = document.getElementById('importQuoteNoInput').value.trim().toUpperCase();
+  let quoteId = '';
+  
+  // 判斷是否手動輸入了單號
+  if (manualQuoteNo) {
+    // 透過映射表查找對應的ID
+    quoteId = quoteNoToIdMap[manualQuoteNo];
+    if (!quoteId) {
+      alert(`找不到報價單號：${manualQuoteNo}，請確認單號正確！`);
+      return;
+    }
+  } else {
+    // 2. 手動輸入為空時，讀取下拉選單的值
+    quoteId = document.getElementById('importQuoteSelect').value;
+    if (!quoteId) {
+      alert("請選擇或手動輸入要匯入的報價單號");
+      return;
+    }
   }
   
   try {
@@ -427,7 +468,6 @@ async function confirmImportQuote() {
     alert("匯入報價單失敗，請稍後再試");
   }
 }
-
 // ========== 新增函數：開啟廠商網址 ==========
 window.openSupplierUrl = async function(id) {
   try {
