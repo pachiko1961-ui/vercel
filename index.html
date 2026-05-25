@@ -107,30 +107,6 @@
 
 <div class="modal fade" id="modal"><div class="modal-dialog" id="mdSize"><div class="modal-content" id="mdBody"></div></div></div>
 
-<!-- 新增匯入舊報價的彈窗 -->
-<div class="modal fade" id="importQuoteModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">匯入舊報價單</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label">選擇舊報價單號</label>
-          <select class="form-select" id="importQuoteSelect">
-            <option value="">請選擇報價單號</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-primary" onclick="confirmImportQuote()">確認匯入</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ===================== 請填入你的 SUPABASE 資訊 =====================
@@ -140,14 +116,7 @@ const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const modal = new bootstrap.Modal(document.getElementById('modal'));
-// 初始化匯入報價單彈窗
-const importQuoteModal = new bootstrap.Modal(document.getElementById('importQuoteModal'));
 let user = null;
-// 全域變數儲存當前新增報價單的狀態
-let currentNewQuoteState = {
-  items: [],
-  quoteNo: ""
-};
 
 function openSpecTable() {
   window.open('p-table.html', '_blank');
@@ -162,97 +131,6 @@ async function checkAuth() {
     mainPanel.classList.remove('d-none');
     userEmail.textContent = user.email;
     loadAll();
-  }
-}
-
-// ========== 新增函數：加載舊報價單列表用於匯入 ==========
-async function loadOldQuotesForImport() {
-  try {
-    const { data: quotes, error } = await sb.from("quotations")
-      .select("id, quote_no, customer_id")
-      .order("created_at", { ascending: false });
-      
-    if (error || !quotes) {
-      alert("加載舊報價單失敗：" + (error?.message || "無可用報價單"));
-      return;
-    }
-    
-    const selectElement = document.getElementById("importQuoteSelect");
-    selectElement.innerHTML = '<option value="">請選擇報價單號</option>';
-    
-    for (const quote of quotes) {
-      const { data: customer } = await sb.from("customers")
-        .select("name")
-        .eq("id", quote.customer_id)
-        .single();
-        
-      const customerName = customer?.name || "未知客戶";
-      selectElement.innerHTML += `<option value="${quote.id}">${quote.quote_no} (${customerName})</option>`;
-    }
-    
-    // 顯示匯入彈窗
-    importQuoteModal.show();
-  } catch (error) {
-    console.error("加載舊報價單失敗：", error);
-    alert("加載舊報價單失敗，請稍後再試");
-  }
-}
-
-// ========== 新增函數：確認匯入舊報價單 ==========
-async function confirmImportQuote() {
-  const quoteId = document.getElementById('importQuoteSelect').value;
-  if (!quoteId) {
-    alert("請選擇要匯入的報價單");
-    return;
-  }
-  
-  try {
-    // 取得舊報價單主資訊
-    const { data: quote, error: quoteError } = await sb.from("quotations")
-      .select("*")
-      .eq("id", quoteId)
-      .single();
-      
-    if (quoteError || !quote) {
-      alert("取得報價單資訊失敗：" + (quoteError?.message || "無此報價單"));
-      return;
-    }
-    
-    // 取得舊報價單明細
-    const { data: items, error: itemsError } = await sb.from("quotation_items")
-      .select("*")
-      .eq("quotation_id", quoteId);
-      
-    if (itemsError || !items) {
-      alert("取得報價單明細失敗：" + (itemsError?.message || "無商品明細"));
-      return;
-    }
-    
-    // 轉換格式並更新當前新增報價單的商品列表
-    currentNewQuoteState.items = items.map(item => ({
-      name: item.product_name,
-      unit: item.unit || "",
-      qty: item.quantity,
-      price: item.unit_price,
-      cost: item.cost || 0,
-      sub: item.subtotal
-    }));
-    
-    // 更新表單欄位
-    document.getElementById("q_cust").value = quote.customer_id;
-    document.getElementById("q_remark").value = quote.remark || "";
-    document.getElementById("q_status").value = quote.status || "待確認";
-    
-    // 重新渲染商品列表
-    renderItems();
-    
-    // 關閉匯入彈窗
-    importQuoteModal.hide();
-    alert("舊報價單資料匯入成功！");
-    
-  } catch (error) {
-    console.error("匯入報價單失敗：", error);
-    alert("匯入報價單失敗，請稍後再試");
   }
 }
 
@@ -684,12 +562,7 @@ async function updateQuote(id){
 
 let items=[];
 async function openQuote(){
-  // 初始化當前新增報價單狀態
-  currentNewQuoteState.items = [];
-  currentNewQuoteState.quoteNo = await quoteNo();
-  
-  items = []; // 保持原有變數兼容
-  const newQNo = currentNewQuoteState.quoteNo;
+  items=[]; const newQNo = await quoteNo();
   const {data:c}=await sb.from("customers").select("id,name");
   const {data:p}=await sb.from("products").select("*");
   
@@ -702,18 +575,7 @@ async function openQuote(){
     </div>
     <div class="row mb-2">
       <div class="col-6"><select class="form-control" id="q_cust">${c.map(x=>`<option value="${x.id}">${x.name}</option>`)}</select></div>
-      <div class="col-6">
-        <div class="d-flex gap-2">
-          <textarea class="form-control flex-grow-1" id="q_remark" placeholder="請輸入備註"></textarea>
-          <!-- 新增匯入舊報價按鈕 -->
-          <button class="btn btn-outline-primary" onclick="loadOldQuotesForImport()" title="匯入舊報價單">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      <div class="col-6"><textarea class="form-control" id="q_remark" placeholder="請輸入備註"></textarea></div>
     </div>
     <select class="form-control mb-2" onchange="fillProduct()" id="q_prod">
       <option value="">選擇商品</option>
@@ -777,14 +639,10 @@ function addItem(){
     return;
   }
   
-  // 更新全域狀態和原有變數
-  const newItem = {
+  items.push({
     name,unit,qty,price,cost,
     sub:qty*price
-  };
-  currentNewQuoteState.items.push(newItem);
-  items = currentNewQuoteState.items;
-  
+  });
   i_name.value=""; 
   i_qty.value=1; 
   i_unit.value=""; 
@@ -794,11 +652,8 @@ function addItem(){
 }
 
 function renderItems(){
-  // 使用全域狀態的items
-  const renderItemsList = currentNewQuoteState.items;
   let h="", totalPrice=0, totalCost=0, totalProfit=0;
-  
-  renderItemsList.forEach((it,i)=>{
+  items.forEach((it,i)=>{
     const itemCost = it.cost || (it.price * 0.7);
     const itemProfit = it.sub - (itemCost * it.qty);
     
@@ -817,38 +672,29 @@ function renderItems(){
       <td><button class="btn btn-sm btn-danger" onclick="delItem(${i})">刪</button></td>
     </tr>`;
   });
-  
   itemList.innerHTML=h; 
   document.getElementById("totalPrice").innerText = money(totalPrice);
   document.getElementById("totalCost").innerText = money(totalCost);
   document.getElementById("totalProfit").innerText = money(totalProfit);
-  
-  // 同步原有items變數
-  items = renderItemsList;
 }
 
 function delItem(i){
-  // 從全域狀態刪除
-  currentNewQuoteState.items.splice(i,1);
-  items = currentNewQuoteState.items;
+  items.splice(i,1);
   renderItems();
 }
 
 async function saveQuote(){
-  // 使用全域狀態的items
-  const saveItems = currentNewQuoteState.items;
-  
-  if(saveItems.length===0){
+  if(items.length===0){
     alert("請加入商品");
     return;
   }
   
-  const totalAmount = saveItems.reduce((sum, it) => sum + it.sub, 0);
-  const totalCost = saveItems.reduce((sum, it) => sum + (it.qty * it.cost), 0);
-  const totalProfit = saveItems.reduce((sum, it) => sum + (it.sub - (it.qty * it.cost)), 0);
+  const totalAmount = items.reduce((sum, it) => sum + it.sub, 0);
+  const totalCost = items.reduce((sum, it) => sum + (it.qty * it.cost), 0);
+  const totalProfit = items.reduce((sum, it) => sum + (it.sub - (it.qty * it.cost)), 0);
   
   const { data: quote, error } = await sb.from("quotations").insert([{
-    quote_no: currentNewQuoteState.quoteNo,
+    quote_no: q_no.value,
     customer_id: q_cust.value,
     remark: q_remark.value,
     quote_date: q_date.value,
@@ -865,7 +711,7 @@ async function saveQuote(){
     return; 
   }
 
-  const quoteItems = saveItems.map(it => ({
+  const quoteItems = items.map(it => ({
     quotation_id: quote[0].id,
     product_name: it.name,
     unit: it.unit,
@@ -888,12 +734,6 @@ async function saveQuote(){
   alert("儲存成功！");
   closeModal();
   loadQuotes();
-  
-  // 重置全域狀態
-  currentNewQuoteState = {
-    items: [],
-    quoteNo: ""
-  };
 }
 
 async function viewQuote(id){
