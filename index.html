@@ -48,14 +48,14 @@
       <table class="table table-bordered table-sm"><thead><tr><th>名稱</th><th>聯絡人</th><th>電話</th><th>操作</th></tr></thead><tbody id="custList"></tbody></table>
     </div>
 
-    <!-- 廠商面板 - 結構不變，loadSuppliers 函數會修改 -->
+    <!-- 廠商面板 - 結構不變 -->
     <div id="supp" class="tab-pane fade">
       <div class="d-flex justify-content-between mb-2"><h5>廠商管理</h5><button class="btn btn-sm btn-primary" onclick="openSupplier()">新增</button></div>
       <input class="form-control mb-2" placeholder="搜尋" oninput="loadSuppliers()">
       <table class="table table-bordered table-sm"><thead><tr><th>名稱</th><th>聯絡人</th><th>電話</th><th>操作</th></tr></thead><tbody id="suppList"></tbody></table>
     </div>
 
-    <!-- 商品面板不變 -->
+    <!-- 商品面板 - 新增排序下拉選單 -->
     <div id="prod" class="tab-pane fade">
       <div class="d-flex justify-content-between mb-2">
         <h5>商品管理</h5>
@@ -64,45 +64,76 @@
           <button class="btn btn-sm btn-primary" onclick="openProduct()">新增</button>
         </div>
       </div>
-      <input class="form-control mb-2" placeholder="搜尋" oninput="loadProducts()">
-      <table class="table table-bordered table-sm">
+      <div class="d-flex gap-2 mb-2">
+        <input class="form-control flex-grow-1" placeholder="搜尋" oninput="loadProducts()">
+        <select class="form-select w-auto" id="prodSortBy" onchange="loadProducts()">
+          <option value="product_code_asc">商品代號 (升序)</option>
+  	  <option value="product_code_desc">商品代號 (降序)</option>
+          <option value="product_name_asc">商品名稱 (升序)</option>
+          <option value="product_name_desc">商品名稱 (降序)</option>
+	  <option value="update_supplier_asc">更新的廠商 (升序)</option>
+          <option value="update_supplier_desc">更新的廠商 (降序)</option>
+          <option value="update_date_desc">更新日期 (最新)</option>
+        </select>
+      </div>
+
+      <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
         <thead>
           <tr>
-            <th>代號</th><th>名稱</th><th>單位</th><th>售價</th><th>成本</th>
-            <th>資料更新日期</th><th>更新的廠商</th><th>操作</th>
+            <th style="width:120px">代號</th>
+            <th style="width:260px">名稱</th>
+            <th class="text-center" style="width:26px">單位</th>
+            <th class="text-center" style="width:40px">售價</th>
+            <th class="text-center" style="width:40px">成本</th>
+            <th style="width:65px">資料更新日期</th>
+            <th style="width:60px">更新的廠商</th>
+            <th style="width:80px">操作</th>
           </tr>
         </thead>
         <tbody id="prodList"></tbody>
       </table>
     </div>
 
-    <!-- 報價單面板不變 -->
-    <div id="quote" class="tab-pane fade show active">
-      <div class="d-flex justify-content-between mb-2">
-        <h5>報價單管理</h5>
-        <div>
-          <button class="btn btn-sm btn-danger me-2" onclick="batchDeleteQuotes()">刪除選取</button>
-          <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
-          <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
-          <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
-        </div>
-      </div>
-      <input class="form-control mb-2" placeholder="搜尋：單號/客戶/商品/狀態" oninput="loadQuotes()">
-      <table class="table table-bordered table-sm">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="selectAllQuotes"></th>
-            <th>報價單號</th>
-            <th>客戶</th>
-            <th>商品內容</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="quoteList"></tbody>
-      </table>
+    <!-- 報價單面板 - 新增排序下拉選單 -->
+    <!-- 報價單面板 - 調整表格欄位結構 -->
+<div id="quote" class="tab-pane fade show active">
+  <div class="d-flex justify-content-between mb-2">
+    <h5>報價單管理</h5>
+    <div>
+      <button class="btn btn-sm btn-danger me-2" onclick="batchDeleteQuotes()">刪除選取</button>
+      <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
+      <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
+      <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
     </div>
   </div>
+  <div class="d-flex gap-2 mb-2">
+    <input class="form-control flex-grow-1" placeholder="搜尋：單號/客戶/商品/狀態" oninput="loadQuotes()">
+    <select class="form-select w-auto" id="quoteSortBy" onchange="loadQuotes()">
+      <option value="quote_no_desc">報價單號 (最新)</option>          
+      <option value="customer_name_asc">客戶 (升序)</option>
+      <option value="customer_name_desc">客戶 (降序)</option>
+      <option value="product_content_asc">商品內容 (升序)</option>
+      <option value="product_content_desc">商品內容 (降序)</option>
+      <option value="created_at_desc">新增時間 (最新)</option>
+      <option value="created_at_asc">新增時間 (最舊)</option>
+      <option value="status_asc">狀態 (字母排序)</option>
+      <option value="quote_date_desc">報價日期 (最新)</option>
+    </select>
+  </div>
+  <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
+  <thead>
+    <tr>
+      <th width="21"><input type="checkbox"></th>
+      <th width="100">報價單號</th>
+      <th width="100">報價日期</th>
+      <th width="100">客戶</th>
+      <th>商品內容</th>
+      <th width="60">狀態</th>
+      <th width="150">操作</th>
+    </tr>
+  </thead>
+  <tbody id="quoteList"></tbody>
+</table>
 </div>
 
 <div class="modal fade" id="modal"><div class="modal-dialog" id="mdSize"><div class="modal-content" id="mdBody"></div></div></div>
@@ -236,8 +267,8 @@ window.editProduct = async function(id){
     <input class="form-control mb-2" id="p_code" placeholder="商品代號">
     <input class="form-control mb-2" id="p_name" placeholder="名稱">
     <input class="form-control mb-2" id="p_unit" placeholder="單位">
-    <input class="form-control mb-2" id="p_price" type="number" placeholder="售價">
-    <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本">
+    <input class="form-control mb-2" id="p_price" type="number" placeholder="售價" style="text-align: right;">
+    <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本" style="text-align: right;">
     <input class="form-control mb-2" id="p_update_date" type="date" placeholder="資料更新日期">
     <select class="form-control mb-2" id="p_update_supplier">
       <option value="">選擇更新的廠商</option>
@@ -342,10 +373,104 @@ function openCustomer(id){
 async function updateCustomer(id){await sb.from("customers").update({name:c_name.value,contact_person:c_contact.value,phone:c_phone.value,address:c_addr.value}).eq("id",id);closeModal();loadCustomers();}
 async function delCustomer(id){if(confirm("確定刪除?")){await sb.from("customers").delete().eq("id",id);loadCustomers();}}
 
-// 商品管理相關邏輯不變
+// ========== 商品管理 - 新增排序邏輯 ==========
 async function loadProducts(){
   const kw=document.querySelector("#prod input").value;
-  const {data}=await sb.from("products").select("*").or(`product_code.ilike.%${kw}%,product_name.ilike.%${kw}%`).order("created_at",{ascending:false});
+  const sortBy = document.getElementById("prodSortBy")?.value || "created_at_desc";
+  
+  // 解析排序參數
+  let sortColumn = "created_at";
+  let sortOrder = false; // false = descending (最新在前), true = ascending (最舊在前)
+  let sortBySupplier = false; // 標記是否按廠商排序
+  let supplierSortOrder = true; // 廠商排序方向 (預設升序)
+  switch(sortBy) {
+    case "created_at_asc":
+      sortColumn = "created_at";
+      sortOrder = true;
+      break;
+    case "product_code_asc":
+      sortColumn = "product_code";
+      sortOrder = true;
+      break;
+    case "product_code_desc":
+      sortColumn = "product_code";
+      sortOrder = false;
+      break;
+    case "product_name_asc":
+      sortColumn = "product_name";
+      sortOrder = true;
+      break;
+    case "product_name_desc":
+      sortColumn = "product_name";
+      sortOrder = false;
+      break;
+    case "update_date_desc":
+      sortColumn = "update_date";
+      sortOrder = false;
+      break;
+    case "update_supplier_asc":
+      sortBySupplier = true;
+      supplierSortOrder = true; // A-Z 升序
+      break;
+    case "update_supplier_desc":
+      sortBySupplier = true;
+      supplierSortOrder = false; // Z-A 降序
+      break;
+    default: // product_code_desc
+      sortColumn = "product_code";
+      sortOrder = true;
+  }
+  
+  // 查詢商品資料
+  let {data}=await sb.from("products")
+    .select("*")
+    .or(`product_code.ilike.%${kw}%,product_name.ilike.%${kw}%`);
+  
+  // 如果需要按廠商排序，先補充廠商名稱再排序
+  if (sortBySupplier && data) {
+    // 先獲取所有廠商的對應關係
+    const { data: allSuppliers } = await sb.from("suppliers").select("id,name");
+    const supplierMap = {};
+    allSuppliers.forEach(supp => {
+      supplierMap[supp.id] = supp.name || "未設定";
+    });
+    
+    // 為每個商品補充廠商名稱
+    data = data.map(product => {
+      return {
+        ...product,
+        supplier_name: supplierMap[product.update_supplier_id] || "未設定"
+      };
+    });
+    
+    // 按廠商名稱排序
+    data.sort((a, b) => {
+      const nameA = a.supplier_name.toLowerCase();
+      const nameB = b.supplier_name.toLowerCase();
+      if (supplierSortOrder) {
+        // 升序 (A-Z)
+        return nameA.localeCompare(nameB, 'zh-TW');
+      } else {
+        // 降序 (Z-A)
+        return nameB.localeCompare(nameA, 'zh-TW');
+      }
+    });
+  } else if (data) {
+    // 原有排序邏輯
+    data.sort((a, b) => {
+      let valA = a[sortColumn];
+      let valB = b[sortColumn];
+      
+      // 處理字串/數字類型的排序
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return sortOrder 
+          ? valA.localeCompare(valB, 'zh-TW') 
+          : valB.localeCompare(valA, 'zh-TW');
+      } else {
+        return sortOrder ? (valA - valB) : (valB - valA);
+      }
+    });
+  }
   
   let h=""; 
   if(data) {
@@ -359,9 +484,9 @@ async function loadProducts(){
       h+=`<tr>
         <td>${i.product_code}</td>
         <td>${i.product_name}</td>
-        <td>${i.unit}</td>
-        <td>${money(i.sale_price)}</td>
-        <td>${money(i.cost || 0)}</td>
+        <td class="text-center">${i.unit}</td> 
+        <td class="text-end">${money(i.sale_price)}</td>
+        <td class="text-end">${money(i.cost || 0)}</td>
         <td>${i.update_date || "-"}</td>
         <td>${supplierName}</td>
         <td>
@@ -384,8 +509,8 @@ async function openProduct(id){
     <input class="form-control mb-2" id="p_code" placeholder="商品代號">
     <input class="form-control mb-2" id="p_name" placeholder="名稱">
     <input class="form-control mb-2" id="p_unit" placeholder="單位">
-    <input class="form-control mb-2" id="p_price" type="number" placeholder="售價">
-    <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本">
+    <input class="form-control mb-2" id="p_price" type="number" placeholder="售價" style="text-align: right;">
+    <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本" style="text-align: right;">
     <input class="form-control mb-2" id="p_update_date" type="date" placeholder="資料更新日期">
     <select class="form-control mb-2" id="p_update_supplier">
       <option value="">選擇更新的廠商</option>
@@ -447,28 +572,124 @@ async function updateProduct(id){
 
 async function delProduct(id){if(confirm("確定刪除?")){await sb.from("products").delete().eq("id",id);loadProducts();}}
 
-// 報價單相關邏輯不變
+// ========== 報價單管理 - 新增排序邏輯 ==========
 async function loadQuotes() {
   const kw = document.querySelector("#quote input").value.trim().toLowerCase();
-  const { data: quotes, error } = await sb.from("quotations").select("*").order("created_at", { ascending: false });
+  const sortBy = document.getElementById("quoteSortBy")?.value || "created_at_desc";
+  
+  // 解析排序參數
+  let sortColumn = "created_at";
+  let sortOrder = false;
+  // 新增標記：是否按客戶/商品內容排序（需要額外處理）
+  let sortByCustomer = false;
+  let sortByProductContent = false;
+  let customerSortOrder = true; // 客戶排序方向
+  let productContentSortOrder = true; // 商品內容排序方向
+  
+  switch(sortBy) {
+    case "created_at_asc":
+      sortColumn = "created_at";
+      sortOrder = true;
+      break;
+    case "quote_no_desc":
+      sortColumn = "quote_no";
+      sortOrder = false;
+      break;
+    case "status_asc":
+      sortColumn = "status";
+      sortOrder = true;
+      break;
+    case "quote_date_desc":
+      sortColumn = "quote_date";
+      sortOrder = false;
+      break;
+    // 新增客戶排序處理
+    case "customer_name_asc":
+      sortByCustomer = true;
+      customerSortOrder = true; // A-Z 升序
+      break;
+    case "customer_name_desc":
+      sortByCustomer = true;
+      customerSortOrder = false; // Z-A 降序
+      break;
+    // 新增商品內容排序處理
+    case "product_content_asc":
+      sortByProductContent = true;
+      productContentSortOrder = true; // A-Z 升序
+      break;
+    case "product_content_desc":
+      sortByProductContent = true;
+      productContentSortOrder = false; // Z-A 降序
+      break;
+    default: // created_at_desc
+      sortColumn = "created_at";
+      sortOrder = false;
+  }
+  
+  // 獲取報價單基礎資料
+  const { data: quotes, error } = await sb.from("quotations")
+    .select("*")
+    .order(sortColumn, { ascending: sortOrder });
 
-  if (error || !quotes) { quoteList.innerHTML = "<tr><td colspan='6' class='text-center'>載入失敗</td></tr>"; return; }
+  if (error || !quotes) { 
+    quoteList.innerHTML = "<tr><td colspan='6' class='text-center'>載入失敗</td></tr>"; 
+    return; 
+  }
 
-  let rows = [];
+  // 預先加載所有客戶資料（優化效能，避免重複查詢）
+  const { data: allCustomers } = await sb.from("customers").select("id,name");
+  const customerMap = {};
+  allCustomers.forEach(cust => {
+    customerMap[cust.id] = cust.name || "未知客戶";
+  });
+
+  // 預先加載所有報價單對應的商品內容
+  const quoteProductMap = {};
   for (const q of quotes) {
-    const { data: items } = await sb.from("quotation_items").select("product_name").eq("quotation_id", q.id);
-    const { data: cu } = await sb.from("customers").select("name").eq("id", q.customer_id);
+    const { data: items } = await sb.from("quotation_items")
+      .select("product_name")
+      .eq("quotation_id", q.id);
+    quoteProductMap[q.id] = items?.map(i => i.product_name).join("、") || "無商品";
+  }
 
-    const custName = (cu?.[0]?.name || "").toLowerCase();
-    let productText = items?.length ? items.map(i => i.product_name).join("、") : "無商品";
+  // 處理排序（客戶/商品內容）
+  let sortedQuotes = [...quotes];
+  if (sortByCustomer) {
+    // 按客戶名稱排序
+    sortedQuotes.sort((a, b) => {
+      const nameA = (customerMap[a.customer_id] || "未知客戶").toLowerCase();
+      const nameB = (customerMap[b.customer_id] || "未知客戶").toLowerCase();
+      return customerSortOrder 
+        ? nameA.localeCompare(nameB, 'zh-TW') 
+        : nameB.localeCompare(nameA, 'zh-TW');
+    });
+  } else if (sortByProductContent) {
+    // 按商品內容排序
+    sortedQuotes.sort((a, b) => {
+      const contentA = quoteProductMap[a.id].toLowerCase();
+      const contentB = quoteProductMap[b.id].toLowerCase();
+      return productContentSortOrder
+        ? contentA.localeCompare(contentB, 'zh-TW')
+        : contentB.localeCompare(contentA, 'zh-TW');
+    });
+  }
+
+  // 生成表格內容
+  let rows = [];
+  for (const q of sortedQuotes) {
+    const custName = (customerMap[q.customer_id] || "").toLowerCase();
+    const productText = quoteProductMap[q.id];
+    // 搜尋匹配邏輯不變
     const match = !kw || q.quote_no.includes(kw) || custName.includes(kw) || productText.toLowerCase().includes(kw) || (q.status||"").toLowerCase().includes(kw);
 
     if (match) {
       rows.push(`<tr>
         <td><input type="checkbox" class="quote-checkbox" value="${q.id}"></td>
         <td>${q.quote_no}</td>
-        <td>${cu?.[0]?.name || "-"}</td>
-        <td>${productText.length>25 ? productText.substring(0,25)+"..." : productText}</td>
+        <!-- 新增報價日期欄位 -->
+        <td>${q.quote_date || "-"}</td>
+        <td>${customerMap[q.customer_id] || "-"}</td>
+        <td>${productText}</td>
         <td>${q.status || "待確認"}</td>
         <td>
           <button class='btn btn-sm btn-info' onclick='viewQuote("${q.id}")'>檢</button>
@@ -478,9 +699,8 @@ async function loadQuotes() {
       </tr>`);
     }
   }
-  quoteList.innerHTML = rows.join("") || "<tr><td colspan='6' class='text-center'>無資料</td></tr>";
+  quoteList.innerHTML = rows.join("") || "<tr><td colspan='7' class='text-center'>無資料</td></tr>"; // 注意 colspan 從 6 改為 7
 }
-
 async function editQuote(id){
   const {data:q} = await sb.from("quotations").select("*").eq("id",id).single();
   const {data:c}=await sb.from("customers").select("id,name");
@@ -921,15 +1141,25 @@ async function loadProductHistory(){
   }
 }
 
-// 全選/取消全選報價單
+// 新增/修正 全選/取消全選 函數
 function toggleSelectAllQuotes() {
-  const selectAllCheckbox = document.getElementById("selectAllQuotes");
-  const checkboxes = document.querySelectorAll(".quote-checkbox");
+  // 1. 獲取全選 checkbox（對應報價單表格thead中的checkbox）
+  const selectAllCheckbox = document.querySelector("#quote table thead input[type='checkbox']");
   
-  selectAllCheckbox.checked = !selectAllCheckbox.checked;
-  
-  checkboxes.forEach(checkbox => {
-    checkbox.checked = selectAllCheckbox.checked;
+  // 2. 空值判斷：避免元素不存在時報錯
+  if (!selectAllCheckbox) {
+    console.warn("全選按鈕未找到");
+    return;
+  }
+
+  // 3. 切換全選狀態
+  const isChecked = !selectAllCheckbox.checked;
+  selectAllCheckbox.checked = isChecked;
+
+  // 4. 選中/取消所有報價單的checkbox
+  const quoteCheckboxes = document.querySelectorAll(".quote-checkbox");
+  quoteCheckboxes.forEach(checkbox => {
+    checkbox.checked = isChecked;
   });
 }
 
