@@ -68,7 +68,7 @@
         <input class="form-control flex-grow-1" placeholder="搜尋" oninput="loadProducts()">
         <select class="form-select w-auto" id="prodSortBy" onchange="loadProducts()">
           <option value="product_code_asc">商品代號 (升序)</option>
-  	  <option value="product_code_desc">商品代號 (降序)</option>
+	  <option value="product_code_desc">商品代號 (降序)</option>
           <option value="product_name_asc">商品名稱 (升序)</option>
           <option value="product_name_desc">商品名稱 (降序)</option>
 	  <option value="update_supplier_asc">更新的廠商 (升序)</option>
@@ -95,46 +95,46 @@
     </div>
 
     <!-- 報價單面板 - 新增排序下拉選單 -->
-    <!-- 報價單面板 - 調整表格欄位結構 -->
-<div id="quote" class="tab-pane fade show active">
-  <div class="d-flex justify-content-between mb-2">
-    <h5>報價單管理</h5>
-    <div>
-      <button class="btn btn-sm btn-danger me-2" onclick="batchDeleteQuotes()">刪除選取</button>
-      <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
-      <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
-      <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
+    <div id="quote" class="tab-pane fade">
+      <div class="d-flex justify-content-between mb-2">
+        <h5>報價單管理</h5>
+        <div>
+          <button class="btn btn-sm btn-danger me-2" onclick="batchDeleteQuotes()">刪除選取</button>
+          <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
+          <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
+          <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
+          <button class="btn btn-sm btn-dark me-2" onclick="openImportOldQuote()">匯入舊報價單</button>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mb-2">
+        <input class="form-control flex-grow-1" placeholder="搜尋：單號/客戶/商品/狀態" oninput="loadQuotes()">
+        <select class="form-select w-auto" id="quoteSortBy" onchange="loadQuotes()">
+          <option value="quote_no_desc">報價單號 (最新)</option>          
+          <option value="customer_name_asc">客戶 (升序)</option>
+          <option value="customer_name_desc">客戶 (降序)</option>
+          <option value="product_content_asc">商品內容 (升序)</option>
+          <option value="product_content_desc">商品內容 (降序)</option>
+          <option value="created_at_desc">新增時間 (最新)</option>
+          <option value="created_at_asc">新增時間 (最舊)</option>
+          <option value="status_asc">狀態 (字母排序)</option>
+          <option value="quote_date_desc">報價日期 (最新)</option>
+        </select>
+      </div>
+      <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
+      <thead>
+        <tr>
+          <th width="21"><input type="checkbox"></th>
+          <th width="100">報價單號</th>
+          <th width="100">報價日期</th>
+          <th width="100">客戶</th>
+          <th>商品內容</th>
+          <th width="60">狀態</th>
+          <th width="160">操作</th>
+        </tr>
+      </thead>
+      <tbody id="quoteList"></tbody>
+    </table>
     </div>
-  </div>
-  <div class="d-flex gap-2 mb-2">
-    <input class="form-control flex-grow-1" placeholder="搜尋：單號/客戶/商品/狀態" oninput="loadQuotes()">
-    <select class="form-select w-auto" id="quoteSortBy" onchange="loadQuotes()">
-      <option value="quote_no_desc">報價單號 (最新)</option>          
-      <option value="customer_name_asc">客戶 (升序)</option>
-      <option value="customer_name_desc">客戶 (降序)</option>
-      <option value="product_content_asc">商品內容 (升序)</option>
-      <option value="product_content_desc">商品內容 (降序)</option>
-      <option value="created_at_desc">新增時間 (最新)</option>
-      <option value="created_at_asc">新增時間 (最舊)</option>
-      <option value="status_asc">狀態 (字母排序)</option>
-      <option value="quote_date_desc">報價日期 (最新)</option>
-    </select>
-  </div>
-  <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
-  <thead>
-    <tr>
-      <th width="21"><input type="checkbox"></th>
-      <th width="100">報價單號</th>
-      <th width="100">報價日期</th>
-      <th width="100">客戶</th>
-      <th>商品內容</th>
-      <th width="60">狀態</th>
-      <th width="150">操作</th>
-    </tr>
-  </thead>
-  <tbody id="quoteList"></tbody>
-</table>
-</div>
 
 <div class="modal fade" id="modal"><div class="modal-dialog" id="mdSize"><div class="modal-content" id="mdBody"></div></div></div>
 
@@ -168,11 +168,8 @@ async function checkAuth() {
 // ========== 新增函數：開啟廠商網址 ==========
 window.openSupplierUrl = async function(id) {
   try {
-    // 從Supabase取得該廠商的URL
     const { data } = await sb.from("suppliers").select("url").eq("id", id).single();
-    
     if (data && data.url) {
-      // 開啟新視窗打開廠商網址
       window.open(data.url, '_blank');
     } else {
       alert("該廠商尚未設定網址！");
@@ -183,7 +180,7 @@ window.openSupplierUrl = async function(id) {
   }
 };
 
-// ========== 核心修改1：廠商新增/編輯表單加入「網址」欄位 ==========
+// ========== 廠商管理 ==========
 function openSupplier(id){
   show(`<div class="modal-header"><h5>${id?"編輯":"新增"}廠商</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
@@ -191,7 +188,6 @@ function openSupplier(id){
     <input class="form-control mb-2" id="s_contact" placeholder="聯絡人">
     <input class="form-control mb-2" id="s_phone" placeholder="電話">
     <textarea class="form-control mb-2" id="s_addr" placeholder="地址"></textarea>
-    <!-- 新增：廠商網址欄位 -->
     <input class="form-control mb-2" id="s_url" placeholder="廠商網址 (選填)" type="url">
   </div>
   <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateSupplier('${id}')`:'saveSupplier()'}">儲存</button></div>`);
@@ -202,20 +198,17 @@ function openSupplier(id){
       s_contact.value=r.data.contact_person||""; 
       s_phone.value=r.data.phone||""; 
       s_addr.value=r.data.address||"";
-      // 新增：載入廠商網址
       s_url.value = r.data.url || "";
     });
   }
 }
 
-// ========== 核心修改2：儲存廠商時加入「網址」欄位 ==========
 async function saveSupplier(){
   await sb.from("suppliers").insert([{
     name:s_name.value,
     contact_person:s_contact.value,
     phone:s_phone.value,
     address:s_addr.value,
-    // 新增：儲存廠商網址
     url: s_url.value || null,
     user_id:uid()
   }]);
@@ -223,21 +216,18 @@ async function saveSupplier(){
   loadSuppliers();
 }
 
-// ========== 核心修改3：更新廠商時加入「網址」欄位 ==========
 async function updateSupplier(id){
   await sb.from("suppliers").update({
     name:s_name.value,
     contact_person:s_contact.value,
     phone:s_phone.value,
     address:s_addr.value,
-    // 新增：更新廠商網址
     url: s_url.value || null
   }).eq("id",id);
   closeModal();
   loadSuppliers();
 }
 
-// ========== 核心修改4：廠商列表加載邏輯 - 新增「網」按鈕 ==========
 async function loadSuppliers(){
   const kw=document.querySelector("#supp input").value;
   const {data}=await sb.from("suppliers").select("*").ilike("name",`%${kw}%`).order("created_at",{ascending:false});
@@ -257,7 +247,7 @@ async function loadSuppliers(){
   suppList.innerHTML=h;
 }
 
-// 原有商品相關修改不變（保留）
+// ========== 商品管理 ==========
 window.editProduct = async function(id){
   const { data: suppliers } = await sb.from("suppliers").select("id,name");
   const supplierOptions = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -274,7 +264,6 @@ window.editProduct = async function(id){
       <option value="">選擇更新的廠商</option>
       ${supplierOptions}
     </select>
-    <!-- 新增：商品網址欄位 -->
     <input class="form-control mb-2" id="p_url" placeholder="商品網址 (選填)" type="url">
     <textarea class="form-control" id="p_remark" placeholder="備註"></textarea>
   </div>
@@ -299,7 +288,6 @@ window.editProduct = async function(id){
 window.openProductUrl = async function(id) {
   try {
     const { data } = await sb.from("products").select("product_url").eq("id", id).single();
-    
     if (data && data.product_url) {
       window.open(data.product_url, '_blank');
     } else {
@@ -311,78 +299,14 @@ window.openProductUrl = async function(id) {
   }
 };
 
-// 原有登入/註冊邏輯不變
-async function login() {
-  const { error } = await sb.auth.signInWithPassword({ email: email.value, password: password.value });
-  if (error) alert("登入錯誤："+error.message); else location.reload();
-}
-async function logout() { await sb.auth.signOut(); location.reload(); }
-
-function showRegister() {
-  loginForm.innerHTML = `
-    <h5>註冊帳號</h5>
-    <input class="form-control mb-2" id="rEmail" type="email" placeholder="信箱">
-    <input class="form-control mb-2" id="rPassword" type="password" placeholder="密碼至少6碼">
-    <button class="btn btn-success w-100 mb-2" onclick="register()">註冊</button>
-    <button class="btn w-100 btn-sm" onclick="location.reload()">返回</button>
-  `;
-}
-async function register() {
-  const e = rEmail.value.trim(); const p = rPassword.value.trim();
-  if (!e || !p) { alert("請輸入信箱與密碼"); return; }
-  if (p.length < 6) { alert("密碼至少6碼"); return; }
-  const { error } = await sb.auth.signUp({ email: e, password: p });
-  if (error) alert("註冊失敗："+error.message); else alert("註冊成功！請登入");
-}
-
-function show(html, lg=false) { mdSize.className = lg ? "modal-dialog modal-lg" : "modal-dialog"; mdBody.innerHTML = html; modal.show(); }
-function closeModal() { modal.hide(); }
-function money(v) { return Number(v||0).toLocaleString(); }
-function uid() { return user.id; }
-
-// 報價單號生成邏輯不變
-async function quoteNo() {
-  const now = new Date();
-  const y = now.getFullYear().toString().slice(2);
-  const m = String(now.getMonth()+1).padStart(2,'0');
-  const d = String(now.getDate()).padStart(2,'0');
-  const dc = y+m+d;
-  const { data } = await sb.from("quotations").select("quote_no").like("quote_no",`Q${dc}%`).order("quote_no",{ascending:false}).limit(1);
-  let seq=1; if(data && data.length>0) seq=parseInt(data[0].quote_no.slice(-2))+1;
-  return `Q${dc}${String(seq).padStart(2,'0')}`;
-}
-
-// 客戶管理邏輯不變
-async function loadCustomers(){
-  const kw=document.querySelector("#cust input").value;
-  const {data}=await sb.from("customers").select("*").ilike("name",`%${kw}%`).order("created_at",{ascending:false});
-  let h=""; if(data) data.forEach(i=>h+=`<tr><td>${i.name}</td><td>${i.contact_person||"-"}</td><td>${i.phone||"-"}</td><td><button class='btn btn-sm btn-warning' onclick='editCustomer("${i.id}")'>編</button><button class='btn btn-sm btn-danger' onclick='delCustomer("${i.id}")'>刪</button></td></tr>`);
-  custList.innerHTML=h;
-}
-// 新增 editCustomer 函數（與 openCustomer 合併，保持邏輯統一）
-function editCustomer(id) {
-  openCustomer(id); // 直接調用已有的 openCustomer 函數（支援編輯功能）
-}
-
-function openCustomer(id){
-  show(`<div class="modal-header"><h5>${id?"編輯":"新增"}客戶</h5><button class="btn-close" onclick="closeModal()"></button></div>
-  <div class="modal-body"><input class="form-control mb-2" id="c_name" placeholder="名稱"><input class="form-control mb-2" id="c_contact" placeholder="聯絡人"><input class="form-control mb-2" id="c_phone" placeholder="電話"><textarea class="form-control" id="c_addr" placeholder="地址"></textarea></div>
-  <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateCustomer('${id}')`:'saveCustomer()'}">儲存</button></div>`);
-  if(id)sb.from("customers").select("*").eq("id",id).single().then(r=>{c_name.value=r.data.name; c_contact.value=r.data.contact_person||""; c_phone.value=r.data.phone||""; c_addr.value=r.data.address||"";});
-}async function saveCustomer(){await sb.from("customers").insert([{name:c_name.value,contact_person:c_contact.value,phone:c_phone.value,address:c_addr.value,user_id:uid()}]);closeModal();loadCustomers();}
-async function updateCustomer(id){await sb.from("customers").update({name:c_name.value,contact_person:c_contact.value,phone:c_phone.value,address:c_addr.value}).eq("id",id);closeModal();loadCustomers();}
-async function delCustomer(id){if(confirm("確定刪除?")){await sb.from("customers").delete().eq("id",id);loadCustomers();}}
-
-// ========== 商品管理 - 新增排序邏輯 ==========
 async function loadProducts(){
   const kw=document.querySelector("#prod input").value;
   const sortBy = document.getElementById("prodSortBy")?.value || "created_at_desc";
   
-  // 解析排序參數
   let sortColumn = "created_at";
-  let sortOrder = false; // false = descending (最新在前), true = ascending (最舊在前)
-  let sortBySupplier = false; // 標記是否按廠商排序
-  let supplierSortOrder = true; // 廠商排序方向 (預設升序)
+  let sortOrder = false;
+  let sortBySupplier = false;
+  let supplierSortOrder = true;
   switch(sortBy) {
     case "created_at_asc":
       sortColumn = "created_at";
@@ -410,58 +334,45 @@ async function loadProducts(){
       break;
     case "update_supplier_asc":
       sortBySupplier = true;
-      supplierSortOrder = true; // A-Z 升序
+      supplierSortOrder = true;
       break;
     case "update_supplier_desc":
       sortBySupplier = true;
-      supplierSortOrder = false; // Z-A 降序
+      supplierSortOrder = false;
       break;
-    default: // product_code_desc
+    default:
       sortColumn = "product_code";
       sortOrder = true;
   }
   
-  // 查詢商品資料
   let {data}=await sb.from("products")
     .select("*")
     .or(`product_code.ilike.%${kw}%,product_name.ilike.%${kw}%`);
   
-  // 如果需要按廠商排序，先補充廠商名稱再排序
   if (sortBySupplier && data) {
-    // 先獲取所有廠商的對應關係
     const { data: allSuppliers } = await sb.from("suppliers").select("id,name");
     const supplierMap = {};
     allSuppliers.forEach(supp => {
       supplierMap[supp.id] = supp.name || "未設定";
     });
     
-    // 為每個商品補充廠商名稱
-    data = data.map(product => {
-      return {
-        ...product,
-        supplier_name: supplierMap[product.update_supplier_id] || "未設定"
-      };
-    });
+    data = data.map(product => ({
+      ...product,
+      supplier_name: supplierMap[product.update_supplier_id] || "未設定"
+    }));
     
-    // 按廠商名稱排序
     data.sort((a, b) => {
       const nameA = a.supplier_name.toLowerCase();
       const nameB = b.supplier_name.toLowerCase();
-      if (supplierSortOrder) {
-        // 升序 (A-Z)
-        return nameA.localeCompare(nameB, 'zh-TW');
-      } else {
-        // 降序 (Z-A)
-        return nameB.localeCompare(nameA, 'zh-TW');
-      }
+      return supplierSortOrder 
+        ? nameA.localeCompare(nameB, 'zh-TW') 
+        : nameB.localeCompare(nameA, 'zh-TW');
     });
   } else if (data) {
-    // 原有排序邏輯
     data.sort((a, b) => {
       let valA = a[sortColumn];
       let valB = b[sortColumn];
       
-      // 處理字串/數字類型的排序
       if (typeof valA === 'string' && typeof valB === 'string') {
         return sortOrder 
           ? valA.localeCompare(valB, 'zh-TW') 
@@ -542,7 +453,7 @@ async function saveProduct(){
     product_code:p_code.value,
     product_name:p_name.value,
     unit:p_unit.value,
-    sale_price:parseFloat(p_price.value),
+    sale_price:parseFloat(p_price.value) || 0,
     cost: parseFloat(p_cost.value) || 0,
     update_date: p_update_date.value,
     update_supplier_id: p_update_supplier.value || null,
@@ -559,7 +470,7 @@ async function updateProduct(id){
     product_code:p_code.value,
     product_name:p_name.value,
     unit:p_unit.value,
-    sale_price:parseFloat(p_price.value),
+    sale_price:parseFloat(p_price.value) || 0,
     cost: parseFloat(p_cost.value) || 0,
     update_date: p_update_date.value,
     update_supplier_id: p_update_supplier.value || null,
@@ -572,19 +483,17 @@ async function updateProduct(id){
 
 async function delProduct(id){if(confirm("確定刪除?")){await sb.from("products").delete().eq("id",id);loadProducts();}}
 
-// ========== 報價單管理 - 新增排序邏輯 ==========
+// ========== 報價單管理 - 核心修正：成本/利潤計算 ==========
 async function loadQuotes() {
   const kw = document.querySelector("#quote input").value.trim().toLowerCase();
   const sortBy = document.getElementById("quoteSortBy")?.value || "created_at_desc";
   
-  // 解析排序參數
   let sortColumn = "created_at";
   let sortOrder = false;
-  // 新增標記：是否按客戶/商品內容排序（需要額外處理）
   let sortByCustomer = false;
   let sortByProductContent = false;
-  let customerSortOrder = true; // 客戶排序方向
-  let productContentSortOrder = true; // 商品內容排序方向
+  let customerSortOrder = true;
+  let productContentSortOrder = true;
   
   switch(sortBy) {
     case "created_at_asc":
@@ -603,47 +512,42 @@ async function loadQuotes() {
       sortColumn = "quote_date";
       sortOrder = false;
       break;
-    // 新增客戶排序處理
     case "customer_name_asc":
       sortByCustomer = true;
-      customerSortOrder = true; // A-Z 升序
+      customerSortOrder = true;
       break;
     case "customer_name_desc":
       sortByCustomer = true;
-      customerSortOrder = false; // Z-A 降序
+      customerSortOrder = false;
       break;
-    // 新增商品內容排序處理
     case "product_content_asc":
       sortByProductContent = true;
-      productContentSortOrder = true; // A-Z 升序
+      productContentSortOrder = true;
       break;
     case "product_content_desc":
       sortByProductContent = true;
-      productContentSortOrder = false; // Z-A 降序
+      productContentSortOrder = false;
       break;
-    default: // created_at_desc
+    default:
       sortColumn = "created_at";
       sortOrder = false;
   }
   
-  // 獲取報價單基礎資料
   const { data: quotes, error } = await sb.from("quotations")
     .select("*")
     .order(sortColumn, { ascending: sortOrder });
 
   if (error || !quotes) { 
-    quoteList.innerHTML = "<tr><td colspan='6' class='text-center'>載入失敗</td></tr>"; 
+    quoteList.innerHTML = "<tr><td colspan='7' class='text-center'>載入失敗</td></tr>"; 
     return; 
   }
 
-  // 預先加載所有客戶資料（優化效能，避免重複查詢）
   const { data: allCustomers } = await sb.from("customers").select("id,name");
   const customerMap = {};
   allCustomers.forEach(cust => {
     customerMap[cust.id] = cust.name || "未知客戶";
   });
 
-  // 預先加載所有報價單對應的商品內容
   const quoteProductMap = {};
   for (const q of quotes) {
     const { data: items } = await sb.from("quotation_items")
@@ -652,10 +556,8 @@ async function loadQuotes() {
     quoteProductMap[q.id] = items?.map(i => i.product_name).join("、") || "無商品";
   }
 
-  // 處理排序（客戶/商品內容）
   let sortedQuotes = [...quotes];
   if (sortByCustomer) {
-    // 按客戶名稱排序
     sortedQuotes.sort((a, b) => {
       const nameA = (customerMap[a.customer_id] || "未知客戶").toLowerCase();
       const nameB = (customerMap[b.customer_id] || "未知客戶").toLowerCase();
@@ -664,7 +566,6 @@ async function loadQuotes() {
         : nameB.localeCompare(nameA, 'zh-TW');
     });
   } else if (sortByProductContent) {
-    // 按商品內容排序
     sortedQuotes.sort((a, b) => {
       const contentA = quoteProductMap[a.id].toLowerCase();
       const contentB = quoteProductMap[b.id].toLowerCase();
@@ -674,23 +575,22 @@ async function loadQuotes() {
     });
   }
 
-  // 生成表格內容
   let rows = [];
   for (const q of sortedQuotes) {
     const custName = (customerMap[q.customer_id] || "").toLowerCase();
     const productText = quoteProductMap[q.id];
-    // 搜尋匹配邏輯不變
-    const match = !kw || q.quote_no.includes(kw) || custName.includes(kw) || productText.toLowerCase().includes(kw) || (q.status||"").toLowerCase().includes(kw);
+    // 修正：報價單號搜尋不區分大小寫
+    const quoteNoMatch = q.quote_no.toLowerCase().includes(kw);
+    const match = !kw || quoteNoMatch || custName.includes(kw) || productText.toLowerCase().includes(kw) || (q.status||"").toLowerCase().includes(kw);
 
     if (match) {
       rows.push(`<tr>
         <td><input type="checkbox" class="quote-checkbox" value="${q.id}"></td>
         <td>${q.quote_no}</td>
-        <!-- 新增報價日期欄位 -->
         <td>${q.quote_date || "-"}</td>
         <td>${customerMap[q.customer_id] || "-"}</td>
         <td>${productText}</td>
-        <td>${q.status || "待確認"}</td>
+        <td>${q.status || "報價中"}</td>
         <td>
           <button class='btn btn-sm btn-info' onclick='viewQuote("${q.id}")'>檢</button>
           <button class='btn btn-sm btn-warning' onclick='editQuote("${q.id}")'>編</button>
@@ -699,8 +599,9 @@ async function loadQuotes() {
       </tr>`);
     }
   }
-  quoteList.innerHTML = rows.join("") || "<tr><td colspan='7' class='text-center'>無資料</td></tr>"; // 注意 colspan 從 6 改為 7
+  quoteList.innerHTML = rows.join("") || "<tr><td colspan='7' class='text-center'>無資料</td></tr>";
 }
+
 async function editQuote(id){
   const {data:q} = await sb.from("quotations").select("*").eq("id",id).single();
   const {data:c}=await sb.from("customers").select("id,name");
@@ -709,6 +610,8 @@ async function editQuote(id){
   
   let itemRows = "";
   if(items && items.length>0) items.forEach((item,i)=>{
+    // 修正：利潤計算 = 小計 - (成本 * 數量)
+    const profit = (item.subtotal || 0) - ( (item.cost || 0) * (item.quantity || 0) );
     itemRows+=`<tr data-item-id="${i}">
       <td>NO.${i+1}</td>
       <td class="product-name">${item.product_name}</td>
@@ -716,17 +619,21 @@ async function editQuote(id){
       <td class="unit">${item.unit||"-"}</td>
       <td class="text-end unit-price">${money(item.unit_price)}</td>
       <td class="text-end subtotal">${money(item.subtotal)}</td>
-      <td class="text-end profit">${money(item.subtotal - (item.cost || 0) * item.quantity)}</td>
+      <td class="text-end profit">${money(profit)}</td>
       <td></td>
     </tr>`;
   });
+
+  // 修正：總成本/總利潤計算
+  const totalCost = items?.reduce((sum, item) => sum + (item.cost || 0) * (item.quantity || 0), 0) || 0;
+  const totalProfit = (q.total_amount || 0) - totalCost;
 
   show(`<div class="modal-header"><h5>編輯報價單</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
     <div class="row mb-2">
       <div class="col-4"><input class="form-control" id="q_no" value="${q.quote_no}" readonly></div>
       <div class="col-4"><input type="date" class="form-control" id="q_date" value="${q.quote_date}"></div>
-      <div class="col-4"><select class="form-control" id="q_status"><option ${q.status=="待確認"?"selected":""}>待確認</option><option ${q.status=="已成交"?"selected":""}>已成交</option><option ${q.status=="已取消"?"selected":""}>已取消</option></select></div>
+      <div class="col-4"><select class="form-control" id="q_status"><option ${q.status=="報價中"?"selected":""}>報價中</option><option ${q.status=="已成交"?"selected":""}>已成交</option><option ${q.status=="已取消"?"selected":""}>已取消</option></select></div>
     </div>
     <div class="row mb-2">
       <div class="col-6"><select class="form-control" id="q_cust">${c.map(x=>`<option value="${x.id}" ${x.id==q.customer_id?"selected":""}>${x.name}</option>`)}</select></div>
@@ -740,8 +647,8 @@ async function editQuote(id){
     </table>
     <div class="text-end mt-2">
       <h5>總金額：${money(q.total_amount)}</h5>
-      <h5 class="mt-2">總成本：${money(q.total_cost || 0)}</h5>
-      <h5 class="mt-2">總利潤：${money(q.total_amount - (q.total_cost || 0))}</h5>
+      <h5 class="mt-2">總成本：${money(totalCost)}</h5>
+      <h5 class="mt-2">總利潤：${money(totalProfit)}</h5>
     </div>
   </div>
   <div class="modal-footer">
@@ -781,8 +688,10 @@ async function updateQuote(id){
 }
 
 let items=[];
+// 修正：新增報價單 - 成本/利潤計算
 async function openQuote(){
-  items=[]; const newQNo = await quoteNo();
+  items=[]; 
+  const newQNo = await quoteNo();
   const {data:c}=await sb.from("customers").select("id,name");
   const {data:p}=await sb.from("products").select("*");
   
@@ -791,7 +700,7 @@ async function openQuote(){
     <div class="row mb-2">
       <div class="col-4"><input class="form-control" id="q_no" value="${newQNo}" readonly></div>
       <div class="col-4"><input type="date" class="form-control" id="q_date" value="${new Date().toISOString().split('T')[0]}"></div>
-      <div class="col-4"><select class="form-control" id="q_status"><option>待確認</option><option>已成交</option><option>已取消</option></select></div>
+      <div class="col-4"><select class="form-control" id="q_status"><option>報價中</option><option>已成交</option><option>已取消</option></select></div>
     </div>
     <div class="row mb-2">
       <div class="col-6"><select class="form-control" id="q_cust">${c.map(x=>`<option value="${x.id}">${x.name}</option>`)}</select></div>
@@ -799,22 +708,26 @@ async function openQuote(){
     </div>
     <select class="form-control mb-2" onchange="fillProduct()" id="q_prod">
       <option value="">選擇商品</option>
-      ${p.map(x=>`<option data-price="${x.sale_price}" data-cost="${x.cost}" data-unit="${x.unit}" value="${x.product_name}">${x.product_name}</option>`)}
+      ${p.map(x=>`<option 
+        data-price="${x.sale_price || 0}" 
+        data-cost="${x.cost || 0}" 
+        data-unit="${x.unit || ''}" 
+        value="${x.product_name}">${x.product_name}</option>`)}
     </select>
     <div class="input-group mb-2">
       <input class="form-control" id="i_name" placeholder="商品" readonly>
-      <input class="form-control" id="i_qty" type="number" value="1" placeholder="數量">
+      <input class="form-control" id="i_qty" type="number" value="1" placeholder="數量" min="1">
       <input class="form-control" id="i_unit" placeholder="單位" readonly>
-      <input class="form-control" id="i_price" type="number" placeholder="單價">
-      <input class="form-control" id="i_cost" type="number" placeholder="成本">
+      <input class="form-control" id="i_price" type="number" placeholder="單價" min="0">
+      <input class="form-control" id="i_cost" type="number" placeholder="成本" min="0">
       <button class="btn btn-primary" onclick="addItem()">加入</button>
     </div>
     <table class="table table-sm table-bordered">
       <thead>
         <tr>
           <th>編號</th><th>商品名稱</th><th class="text-end">數量</th><th>單位</th>
-          <th class="text-end">單價</th><th class="text-end">成本</th><th class="text-end">利潤</th>
-          <th class="text-end">小計</th><th></th>
+          <th class="text-end">單價</th><th class="text-end">成本</th><th class="text-end">小計</th>
+          <th class="text-end">利潤</th><th></th>
         </tr>
       </thead>
       <tbody id="itemList"></tbody>
@@ -829,185 +742,760 @@ async function openQuote(){
   renderItems();
 }
 
-function fillProduct(){
-  const opt = q_prod.options[q_prod.selectedIndex];
-  if(opt.value){
-    i_name.value=opt.value; 
-    i_price.value=opt.dataset.price; 
-    i_unit.value=opt.dataset.unit;
-    i_cost.value=opt.dataset.cost || "";
-  }
+// 修正：填充商品資訊 - 確保成本正確帶入
+function fillProduct() {
+  const sel = document.getElementById('q_prod');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) return;
+  
+  document.getElementById('i_name').value = opt.value;
+  document.getElementById('i_price').value = opt.dataset.price || 0;
+  document.getElementById('i_cost').value = opt.dataset.cost || 0;
+  document.getElementById('i_unit').value = opt.dataset.unit || '';
 }
 
-function addItem(){
-  const name=i_name.value, 
-        qty=parseInt(i_qty.value), 
-        unit=i_unit.value, 
-        price=parseFloat(i_price.value),
-        cost=parseFloat(i_cost.value) || 0;
+// 修正：加入商品 - 正確計算小計/利潤
+function addItem() {
+  const name = document.getElementById('i_name').value;
+  const qty = parseInt(document.getElementById('i_qty').value) || 1;
+  const unit = document.getElementById('i_unit').value || '';
+  const price = parseFloat(document.getElementById('i_price').value) || 0;
+  const cost = parseFloat(document.getElementById('i_cost').value) || 0;
   
-  if(!name){
-    alert("請選擇商品");
+  if (!name || price < 0) {
+    alert("請填寫完整商品資訊！");
     return;
   }
-  if(isNaN(qty) || qty <=0){
-    alert("數量必須大於0");
-    return;
-  }
-  if(isNaN(price) || price <=0){
-    alert("單價必須大於0");
-    return;
-  }
+  
+  // 計算小計和利潤
+  const subtotal = price * qty;
+  const profit = subtotal - (cost * qty);
   
   items.push({
-    name,unit,qty,price,cost,
-    sub:qty*price
+    name, qty, unit, price, cost, subtotal, profit
   });
-  i_name.value=""; 
-  i_qty.value=1; 
-  i_unit.value=""; 
-  i_price.value="";
-  i_cost.value="";
+  
   renderItems();
+  
+  // 清空輸入框
+  document.getElementById('i_qty').value = 1;
+  document.getElementById('q_prod').value = '';
+  document.getElementById('i_name').value = '';
+  document.getElementById('i_unit').value = '';
+  document.getElementById('i_price').value = '';
+  document.getElementById('i_cost').value = '';
 }
 
-function renderItems(){
-  let h="", totalPrice=0, totalCost=0, totalProfit=0;
-  items.forEach((it,i)=>{
-    const itemCost = it.cost || (it.price * 0.7);
-    const itemProfit = it.sub - (itemCost * it.qty);
+// 修正：渲染商品列表 - 同步更新總成本/總利潤
+function renderItems() {
+  const tbody = document.getElementById('itemList');
+  let html = '';
+  
+  // 計算總值
+  let totalPrice = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  
+  items.forEach((item, idx) => {
+    totalPrice += item.subtotal;
+    totalCost += item.cost * item.qty;
+    totalProfit += item.profit;
     
-    totalPrice += it.sub;       
-    totalCost += itemCost * it.qty;
-    totalProfit += itemProfit;  
-    h+=`<tr>
-      <td>NO.${i+1}</td>
-      <td>${it.name}</td>
-      <td class="text-end">${it.qty}</td>
-      <td>${it.unit||"-"}</td>
-      <td class="text-end">${money(it.price)}</td>
-      <td class="text-end">${money(itemCost)}</td>
-      <td class="text-end">${money(itemProfit)}</td>
-      <td class="text-end">${money(it.sub)}</td>
-      <td><button class="btn btn-sm btn-danger" onclick="delItem(${i})">刪</button></td>
+    html += `<tr>
+      <td>${idx+1}</td>
+      <td>${item.name}</td>
+      <td class="text-end">${item.qty}</td>
+      <td>${item.unit || '-'}</td>
+      <td class="text-end">${money(item.price)}</td>
+      <td class="text-end">${money(item.cost)}</td>
+      <td class="text-end">${money(item.subtotal)}</td>
+      <td class="text-end">${money(item.profit)}</td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-danger" onclick="removeItem(${idx})">刪</button>
+      </td>
     </tr>`;
   });
-  itemList.innerHTML=h; 
-  document.getElementById("totalPrice").innerText = money(totalPrice);
-  document.getElementById("totalCost").innerText = money(totalCost);
-  document.getElementById("totalProfit").innerText = money(totalProfit);
+  
+  tbody.innerHTML = html;
+  
+  // 更新總值顯示
+  document.getElementById('totalPrice').textContent = money(totalPrice);
+  document.getElementById('totalCost').textContent = money(totalCost);
+  document.getElementById('totalProfit').textContent = money(totalProfit);
 }
 
-function delItem(i){
-  items.splice(i,1);
+// 修正：刪除商品 - 重新計算總值
+function removeItem(idx) {
+  items.splice(idx, 1);
   renderItems();
 }
 
-async function saveQuote(){
-  if(items.length===0){
-    alert("請加入商品");
+// 修正：儲存報價單 - 正確儲存成本/利潤
+async function saveQuote() {
+  if (items.length === 0) {
+    alert("請至少加入一項商品！");
     return;
   }
   
-  const totalAmount = items.reduce((sum, it) => sum + it.sub, 0);
-  const totalCost = items.reduce((sum, it) => sum + (it.qty * it.cost), 0);
-  const totalProfit = items.reduce((sum, it) => sum + (it.sub - (it.qty * it.cost)), 0);
+  const quoteNo = document.getElementById('q_no').value;
+  const quoteDate = document.getElementById('q_date').value;
+  const customerId = document.getElementById('q_cust').value;
+  const status = document.getElementById('q_status').value;
+  const remark = document.getElementById('q_remark').value;
   
-  const { data: quote, error } = await sb.from("quotations").insert([{
-    quote_no: q_no.value,
-    customer_id: q_cust.value,
-    remark: q_remark.value,
-    quote_date: q_date.value,
-    status: q_status.value,
-    total_amount: totalAmount,
-    total_cost: totalCost,
-    total_profit: totalProfit,
-    user_id: uid()
-  }]).select();
+  // 計算總金額/總成本/總利潤
+  const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
+  const totalCost = items.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+  const totalProfit = totalAmount - totalCost;
   
-  if (error || !quote) { 
-    console.error("報價單主表儲存失敗：", error); 
-    alert("報價單儲存失敗：" + error.message); 
-    return; 
+  try {
+    // 儲存報價單主檔
+    const { data: quoteRes } = await sb.from("quotations").insert([{
+      quote_no: quoteNo,
+      quote_date: quoteDate,
+      customer_id: customerId,
+      status: status,
+      remark: remark,
+      total_amount: totalAmount,
+      total_cost: totalCost,
+      total_profit: totalProfit,
+      user_id: uid()
+    }]).select();
+    
+    const quoteId = quoteRes[0].id;
+    
+    // 儲存報價單明細
+    const itemPromises = items.map(item => 
+      sb.from("quotation_items").insert([{
+        quotation_id: quoteId,
+        product_name: item.name,
+        quantity: item.qty,
+        unit: item.unit,
+        unit_price: item.price,
+        cost: item.cost,
+        subtotal: item.subtotal,
+        profit: item.profit
+      }])
+    );
+    
+    await Promise.all(itemPromises);
+    
+    alert("報價單儲存成功！");
+    closeModal();
+    loadQuotes();
+  } catch (error) {
+    console.error("儲存報價單失敗：", error);
+    alert("儲存失敗，請稍後再試！");
   }
-
-  const quoteItems = items.map(it => ({
-    quotation_id: quote[0].id,
-    product_name: it.name,
-    unit: it.unit,
-    quantity: parseInt(it.qty),
-    unit_price: parseFloat(it.price),
-    cost: parseFloat(it.cost),
-    subtotal: parseFloat(it.sub),
-    profit: parseFloat(it.sub - (it.qty * it.cost)),
-    user_id: uid()
-  }));
-
-  const { error: itemError } = await sb.from("quotation_items").insert(quoteItems);
-  
-  if (itemError) { 
-    console.error("報價明細儲存失敗：", itemError); 
-    alert("商品明細儲存失敗：" + itemError.message); 
-    return; 
-  }
-
-  alert("儲存成功！");
-  closeModal();
-  loadQuotes();
 }
 
-async function viewQuote(id){
-  const {data:q}=await sb.from("quotations").select("*").eq("id",id).single();
-  const {data:i}=await sb.from("quotation_items").select("*").eq("quotation_id",id);
-  const {data:cu}=await sb.from("customers").select("name").eq("id",q.customer_id);
+// ========== 匯入舊報價單功能 (支援編輯後儲存) ==========
+// ========== 修正：匯入舊報價單功能 (完整程式) ==========
+async function openImportOldQuote() {
+  // 清空全域商品列表
+  items = [];
+  
+  // 取得所有舊報價單
+  const { data: oldQuotes, error } = await sb.from("quotations")
+    .select("id, quote_no, quote_date, customer_id, status, total_amount, total_cost, total_profit, remark")
+    .order("created_at", { ascending: false });
+  
+  if (error || !oldQuotes) {
+    alert("載入舊報價單失敗！");
+    return;
+  }
+  
+  // 獲取客戶名稱對應
+  const { data: allCustomers } = await sb.from("customers").select("id,name");
+  const customerMap = {};
+  allCustomers.forEach(cust => customerMap[cust.id] = cust.name || "未知客戶");
+
+  // 獲取所有商品 (用於新增商品選單)
+  const { data: allProducts } = await sb.from("products").select("*");
+  
+  // 構建舊報價單下拉選單選項
+  let quoteOptions = oldQuotes.map(q => `
+    <option value="${q.id}" 
+      data-quote-no="${q.quote_no}"
+      data-quote-date="${q.quote_date}"
+      data-customer-id="${q.customer_id}"
+      data-status="${q.status || '報價中'}"
+      data-remark="${q.remark || ''}">
+      ${q.quote_no} - ${customerMap[q.customer_id] || '未知客戶'}
+    </option>
+  `).join('');
+
+  // 生成新的報價單號（使用統一規則）
+  const newQuoteNo = await quoteNo();
+
+  // 渲染匯入舊報價單的表單
+  show(`<div class="modal-header"><h5>匯入舊報價單</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <label class="form-label">選擇要匯入的舊報價單</label>
+      <select class="form-control" id="importQuoteId" onchange="loadOldQuoteItems()">
+        <option value="">請選擇...</option>
+        ${quoteOptions}
+      </select>
+    </div>
+
+    <div class="row mb-2">
+      <div class="col-4"><input class="form-control" id="import_q_no" value="${newQuoteNo}" readonly></div>
+      <div class="col-4"><input type="date" class="form-control" id="import_q_date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="col-4"><select class="form-control" id="import_q_status"><option>報價中</option><option>已成交</option><option>已取消</option></select></div>
+    </div>
+
+    <div class="row mb-2">
+      <div class="col-6"><select class="form-control" id="import_q_cust">${allCustomers.map(x=>`<option value="${x.id}">${x.name}</option>`)}</select></div>
+      <div class="col-6"><textarea class="form-control" id="import_q_remark" placeholder="請輸入備註"></textarea></div>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">可新增額外商品</label>
+      <select class="form-control mb-2" onchange="fillImportProduct()" id="import_q_prod">
+        <option value="">選擇商品</option>
+        ${allProducts.map(x=>`<option 
+          data-price="${x.sale_price || 0}" 
+          data-cost="${x.cost || 0}" 
+          data-unit="${x.unit || ''}" 
+          value="${x.product_name}">${x.product_name}</option>`)}
+      </select>
+      <div class="input-group mb-2">
+        <input class="form-control" id="import_i_name" placeholder="商品" readonly>
+        <input class="form-control" id="import_i_qty" type="number" value="1" placeholder="數量" min="1">
+        <input class="form-control" id="import_i_unit" placeholder="單位" readonly>
+        <input class="form-control" id="import_i_price" type="number" placeholder="單價" min="0">
+        <input class="form-control" id="import_i_cost" type="number" placeholder="成本" min="0">
+        <button class="btn btn-primary" onclick="addImportItem()">加入</button>
+      </div>
+    </div>
+
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th>編號</th><th>商品名稱</th><th class="text-end">數量</th><th>單位</th>
+          <th class="text-end">單價</th><th class="text-end">成本</th><th class="text-end">小計</th>
+          <th class="text-end">利潤</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="importItemList"></tbody>
+    </table>
+
+    <div class="text-end mt-2">
+      <h6>總售價：<span id="importTotalPrice">0</span></h6>
+      <h6>總成本：<span id="importTotalCost">0</span></h6>
+      <h6>總利潤：<span id="importTotalProfit">0</span></h6>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-success" onclick="saveImportedQuote()">儲存為新報價單</button>
+  </div>`, true);
+
+  // 初始化渲染商品列表
+  renderImportItems();
+}
+
+// 載入選擇的舊報價單詳細資訊
+async function loadOldQuoteDetails() {
+  const quoteId = document.getElementById('importQuoteSelect').value;
+  if (!quoteId) {
+    document.getElementById('importEditArea').classList.add('d-none');
+    document.getElementById('saveImportBtn').setAttribute('disabled', true);
+    items = [];
+    return;
+  }
+
+  // 取得舊報價單主檔資訊
+  const { data: quoteData } = await sb.from("quotations")
+    .select("*")
+    .eq("id", quoteId)
+    .single();
+
+  // 取得舊報價單明細
+  const { data: quoteItems } = await sb.from("quotation_items")
+    .select("*")
+    .eq("quotation_id", quoteId);
+
+  // 初始化全域商品列表
+  items = quoteItems.map(item => ({
+    name: item.product_name,
+    qty: item.quantity || 1,
+    unit: item.unit || '',
+    price: item.unit_price || 0,
+    cost: item.cost || 0,
+    subtotal: item.subtotal || 0,
+    profit: item.profit || 0
+  }));
+
+  // 填充表單欄位
+  document.getElementById('import_q_no').value = await quoteNo(); // 生成新單號
+  document.getElementById('import_q_date').value = quoteData.quote_date || new Date().toISOString().split('T')[0];
+  document.getElementById('import_q_status').value = quoteData.status || '報價中';
+  document.getElementById('import_q_cust').value = quoteData.customer_id || '';
+  document.getElementById('import_q_remark').value = quoteData.remark || '';
+
+  // 渲染商品列表
+  renderImportItems();
+
+  // 顯示編輯區域並啟用儲存按鈕
+  document.getElementById('importEditArea').classList.remove('d-none');
+  document.getElementById('saveImportBtn').removeAttribute('disabled');
+}
+// 加載舊報價單的商品明細
+async function loadOldQuoteItems() {
+  const quoteId = document.getElementById('importQuoteId').value;
+  if (!quoteId) return;
+
+  // 清空當前商品列表
+  items = [];
+
+  // 獲取舊報價單的基本資訊
+  const selectedOption = document.querySelector(`#importQuoteId option[value="${quoteId}"]`);
+  document.getElementById('import_q_date').value = selectedOption.dataset.quoteDate || new Date().toISOString().split('T')[0];
+  document.getElementById('import_q_cust').value = selectedOption.dataset.customerId || '';
+  document.getElementById('import_q_status').value = selectedOption.dataset.status || '報價中';
+  document.getElementById('import_q_remark').value = selectedOption.dataset.remark || '';
+
+  // 獲取舊報價單的商品明細
+  const { data: oldItems, error } = await sb.from("quotation_items")
+    .select("*")
+    .eq("quotation_id", quoteId);
+
+  if (error || !oldItems) {
+    alert("載入舊報價單明細失敗！");
+    return;
+  }
+
+  // 填充商品列表
+  oldItems.forEach(item => {
+    const subtotal = item.unit_price * item.quantity;
+    const profit = subtotal - (item.cost * item.quantity);
+    items.push({
+      name: item.product_name,
+      qty: item.quantity,
+      unit: item.unit,
+      price: item.unit_price,
+      cost: item.cost,
+      subtotal: subtotal,
+      profit: profit
+    });
+  });
+
+  // 重新渲染列表
+  renderImportItems();
+}
+
+// 填充匯入模式的商品資訊
+function fillImportProduct() {
+  const sel = document.getElementById('import_q_prod');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) return;
+  
+  document.getElementById('import_i_name').value = opt.value;
+  document.getElementById('import_i_price').value = opt.dataset.price || 0;
+  document.getElementById('import_i_cost').value = opt.dataset.cost || 0;
+  document.getElementById('import_i_unit').value = opt.dataset.unit || '';
+}
+
+// 加入匯入模式的商品
+function addImportItem() {
+  const name = document.getElementById('import_i_name').value;
+  const qty = parseInt(document.getElementById('import_i_qty').value) || 1;
+  const unit = document.getElementById('import_i_unit').value || '';
+  const price = parseFloat(document.getElementById('import_i_price').value) || 0;
+  const cost = parseFloat(document.getElementById('import_i_cost').value) || 0;
+  
+  if (!name || price < 0) {
+    alert("請填寫完整商品資訊！");
+    return;
+  }
+  
+  // 計算小計和利潤
+  const subtotal = price * qty;
+  const profit = subtotal - (cost * qty);
+  
+  items.push({
+    name, qty, unit, price, cost, subtotal, profit
+  });
+  
+  renderImportItems();
+  
+  // 清空輸入框
+  document.getElementById('import_i_qty').value = 1;
+  document.getElementById('import_q_prod').value = '';
+  document.getElementById('import_i_name').value = '';
+  document.getElementById('import_i_unit').value = '';
+  document.getElementById('import_i_price').value = '';
+  document.getElementById('import_i_cost').value = '';
+}
+
+// 渲染匯入模式的商品列表
+function renderImportItems() {
+  const tbody = document.getElementById('importItemList');
+  let html = '';
+  
+  // 計算總值
+  let totalPrice = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  
+  items.forEach((item, idx) => {
+    totalPrice += item.subtotal;
+    totalCost += item.cost * item.qty;
+    totalProfit += item.profit;
+    
+    html += `<tr>
+      <td>${idx+1}</td>
+      <td>${item.name}</td>
+      <td class="text-end">${item.qty}</td>
+      <td>${item.unit || '-'}</td>
+      <td class="text-end">${money(item.price)}</td>
+      <td class="text-end">${money(item.cost)}</td>
+      <td class="text-end">${money(item.subtotal)}</td>
+      <td class="text-end">${money(item.profit)}</td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-danger" onclick="removeImportItem(${idx})">刪</button>
+      </td>
+    </tr>`;
+  });
+  
+  tbody.innerHTML = html;
+  
+  // 更新總值顯示
+  document.getElementById('importTotalPrice').textContent = money(totalPrice);
+  document.getElementById('importTotalCost').textContent = money(totalCost);
+  document.getElementById('importTotalProfit').textContent = money(totalProfit);
+}
+
+// 刪除匯入模式的商品
+function removeImportItem(idx) {
+  items.splice(idx, 1);
+  renderImportItems();
+}
+
+// 儲存匯入的舊報價單（生成新報價單）
+async function saveImportedQuote() {
+  if (items.length === 0) {
+    alert("請至少加入一項商品！");
+    return;
+  }
+  
+  const quoteNo = document.getElementById('import_q_no').value; // 使用統一生成的編號
+  const quoteDate = document.getElementById('import_q_date').value;
+  const customerId = document.getElementById('import_q_cust').value;
+  const status = document.getElementById('import_q_status').value;
+  const remark = document.getElementById('import_q_remark').value;
+  
+  // 計算總金額/總成本/總利潤
+  const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
+  const totalCost = items.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+  const totalProfit = totalAmount - totalCost;
+  
+  try {
+    // 儲存報價單主檔
+    const { data: quoteRes } = await sb.from("quotations").insert([{
+      quote_no: quoteNo, // 使用統一規則的編號
+      quote_date: quoteDate,
+      customer_id: customerId,
+      status: status,
+      remark: remark,
+      total_amount: totalAmount,
+      total_cost: totalCost,
+      total_profit: totalProfit,
+      user_id: uid()
+    }]).select();
+    
+    const quoteId = quoteRes[0].id;
+    
+    // 儲存報價單明細
+    const itemPromises = items.map(item => 
+      sb.from("quotation_items").insert([{
+        quotation_id: quoteId,
+        product_name: item.name,
+        quantity: item.qty,
+        unit: item.unit,
+        unit_price: item.price,
+        cost: item.cost,
+        subtotal: item.subtotal,
+        profit: item.profit
+      }])
+    );
+    
+    await Promise.all(itemPromises);
+    
+    alert("匯入舊報價單並生成新報價單成功！");
+    closeModal();
+    loadQuotes();
+  } catch (error) {
+    console.error("儲存匯入報價單失敗：", error);
+    alert("儲存失敗，請稍後再試！");
+  }
+}
+
+// ========== 登入/註冊邏輯 ==========
+async function login() {
+  const { error } = await sb.auth.signInWithPassword({ email: email.value, password: password.value });
+  if (error) alert("登入錯誤："+error.message); else location.reload();
+}
+async function logout() { await sb.auth.signOut(); location.reload(); }
+
+function showRegister() {
+  loginForm.innerHTML = `
+    <h5>註冊帳號</h5>
+    <input class="form-control mb-2" id="rEmail" type="email" placeholder="信箱">
+    <input class="form-control mb-2" id="rPassword" type="password" placeholder="密碼至少6碼">
+    <button class="btn btn-success w-100 mb-2" onclick="register()">註冊</button>
+    <button class="btn w-100 btn-sm" onclick="location.reload()">返回</button>
+  `;
+}
+async function register() {
+  const e = rEmail.value.trim(); const p = rPassword.value.trim();
+  if (!e || !p) { alert("請輸入信箱與密碼"); return; }
+  if (p.length < 6) { alert("密碼至少6碼"); return; }
+  const { error } = await sb.auth.signUp({ email: e, password: p });
+  if (error) alert("註冊失敗："+error.message); else alert("註冊成功！請登入");
+}
+
+// 輔助函數：彈窗顯示（保留原功能）
+function show(html, lg) {
+  document.getElementById('mdBody').innerHTML = html;
+  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-lg' : 'modal-dialog';
+  modal.show();
+}
+
+// 輔助函數：關閉彈窗（保留原功能）
+function closeModal() {
+  modal.hide();
+}
+
+// 輔助函數：金額格式化（保留原功能）
+function money(n) {
+  return new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
+}
+// 輔助函數：獲取使用者ID（保留原功能）
+function uid() {
+  return user?.id || '';
+}
+
+// 彈窗顯示函數
+function show(html, lg=false) {
+  document.getElementById('mdBody').innerHTML = html;
+  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-lg' : 'modal-dialog';
+  modal.show();
+}
+
+// ========== 核心：統一報價單號生成函數 (修正版) ==========
+async function quoteNo() {
+  try {
+    // 1. 取得當前日期資訊
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2); // 年度末2碼 (如2026→26)
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份補0
+    const day = String(now.getDate()).padStart(2, '0'); // 日期補0
+    const datePrefix = `${year}${month}${day}`; // 如260527
+    
+    // 2. 從資料庫查詢當日最新的報價單號
+    const { data: latestQuotes, error } = await sb.from("quotations")
+      .select("quote_no")
+      .like("quote_no", `Q${datePrefix}%`) // 匹配當日開頭的編號
+      .order("quote_no", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    // 3. 計算流水號
+    let serialNo = "01"; // 預設起始流水號
+    if (latestQuotes && latestQuotes.length > 0) {
+      const latestNo = latestQuotes[0].quote_no;
+      const latestSerial = latestNo.slice(-2); // 截取最後2位流水號
+      const newSerial = (parseInt(latestSerial) + 1).toString().padStart(2, '0');
+      serialNo = newSerial;
+    }
+
+    // 4. 生成最終報價單號
+    return `Q${datePrefix}${serialNo}`; // 如Q26052701
+  } catch (error) {
+    console.error("生成報價單號失敗：", error);
+    // 異常時使用預設編號（保證功能可用）
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `Q${year}${month}${day}01`;
+  }
+}
+// 客戶管理
+async function loadCustomers(){
+  const kw=document.querySelector("#cust input").value;
+  const {data}=await sb.from("customers").select("*").ilike("name",`%${kw}%`).order("created_at",{ascending:false});
+  let h=""; if(data) data.forEach(i=>h+=`<tr><td>${i.name}</td><td>${i.contact_person||"-"}</td><td>${i.phone||"-"}</td><td><button class='btn btn-sm btn-warning' onclick='editCustomer("${i.id}")'>編</button><button class='btn btn-sm btn-danger' onclick='delCustomer("${i.id}")'>刪</button></td></tr>`);
+  custList.innerHTML=h;
+}
+
+function editCustomer(id) {
+  openCustomer(id);
+}
+
+function openCustomer(id){
+  show(`<div class="modal-header"><h5>${id?"編輯":"新增"}客戶</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  <div class="modal-body"><input class="form-control mb-2" id="c_name" placeholder="名稱"><input class="form-control mb-2" id="c_contact" placeholder="聯絡人"><input class="form-control mb-2" id="c_phone" placeholder="電話"><textarea class="form-control" id="c_addr" placeholder="地址"></textarea></div>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateCustomer('${id}')`:'saveCustomer()'}">儲存</button></div>`);
+  if(id)sb.from("customers").select("*").eq("id",id).single().then(r=>{c_name.value=r.data.name; c_contact.value=r.data.contact_person||""; c_phone.value=r.data.phone||""; c_addr.value=r.data.address||"";});
+}
+
+async function saveCustomer(){
+  await sb.from("customers").insert([{
+    name:c_name.value,
+    contact_person:c_contact.value,
+    phone:c_phone.value,
+    address:c_addr.value,
+    user_id:uid()
+  }]);
+  closeModal();
+  loadCustomers();
+}
+
+async function updateCustomer(id){
+  await sb.from("customers").update({
+    name:c_name.value,
+    contact_person:c_contact.value,
+    phone:c_phone.value,
+    address:c_addr.value
+  }).eq("id",id);
+  closeModal();
+  loadCustomers();
+}
+
+async function delCustomer(id){
+  if(confirm("確定刪除?")){
+    await sb.from("customers").delete().eq("id",id);
+    loadCustomers();
+  }
+}
+
+// 批量刪除報價單
+async function batchDeleteQuotes() {
+  const checkboxes = document.querySelectorAll('.quote-checkbox:checked');
+  if (checkboxes.length === 0) {
+    alert("請選擇要刪除的報價單！");
+    return;
+  }
+  
+  if (!confirm(`確定要刪除選取的 ${checkboxes.length} 筆報價單？`)) {
+    return;
+  }
+  
+  const ids = Array.from(checkboxes).map(cb => cb.value);
+  try {
+    // 先刪除明細
+    await sb.from("quotation_items").delete().in("quotation_id", ids);
+    // 再刪除主檔
+    await sb.from("quotations").delete().in("id", ids);
+    
+    alert("刪除成功！");
+    loadQuotes();
+  } catch (error) {
+    console.error("批量刪除失敗：", error);
+    alert("刪除失敗，請稍後再試！");
+  }
+}
+
+// 全選/取消全選報價單
+function toggleSelectAllQuotes() {
+  const checkboxes = document.querySelectorAll('.quote-checkbox');
+  const headerCheckbox = document.querySelector('#quote table thead th input[type="checkbox"]');
+  const isAllChecked = headerCheckbox?.checked || false;
+  
+  checkboxes.forEach(cb => {
+    cb.checked = !isAllChecked;
+  });
+  
+  if (headerCheckbox) {
+    headerCheckbox.checked = !isAllChecked;
+  }
+}
+
+// 查看報價單
+async function viewQuote(id) {
+  const {data:q} = await sb.from("quotations").select("*").eq("id",id).single();
+  const {data:items}=await sb.from("quotation_items").select("*").eq("quotation_id",id);
+  const {data:customer}=await sb.from("customers").select("name").eq("id", q.customer_id).single();
   
   let itemRows = "";
-  if(i && i.length>0){
-    i.forEach(item => {
-      itemRows += `<tr>
+  let totalCost = 0;
+  let totalProfit = 0;
+  
+  if(items && items.length>0) {
+    items.forEach((item,i)=>{
+      const cost = (item.cost || 0) * (item.quantity || 0);
+      const profit = (item.subtotal || 0) - cost;
+      totalCost += cost;
+      totalProfit += profit;
+      
+      itemRows+=`<tr>
+        <td>NO.${i+1}</td>
         <td>${item.product_name}</td>
         <td class="text-end">${item.quantity}</td>
-        <td>${item.unit}</td>
+        <td>${item.unit||"-"}</td>
         <td class="text-end">${money(item.unit_price)}</td>
+        <td class="text-end">${money(item.cost)}</td>
         <td class="text-end">${money(item.subtotal)}</td>
-        <td class="text-end">${money(item.profit || 0)}</td>
+        <td class="text-end">${money(profit)}</td>
       </tr>`;
     });
   }
   
-  show(`<div class="modal-header"><h5>檢視報價單</h5><button class="btn-close" onclick="closeModal()"></button></div>
+  show(`<div class="modal-header"><h5>檢視報價單 ${q.quote_no}</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
-    <p>客戶：${cu?.[0]?.name||"-"} / 狀態：${q.status}</p>
-    <p>備註：${q.remark || "無"}</p>
-    <table class="table table-sm">
+    <div class="row mb-3">
+      <div class="col-6"><strong>報價日期：</strong>${q.quote_date || "-"}</div>
+      <div class="col-6"><strong>客戶：</strong>${customer?.name || "-"}</div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-6"><strong>狀態：</strong>${q.status || "報價中"}</div>
+      <div class="col-6"><strong>備註：</strong>${q.remark || "-"}</div>
+    </div>
+    <table class="table table-sm table-bordered">
       <thead>
         <tr>
-          <th>商品</th>
-          <th class="text-end">數量</th>
-          <th>單位</th>
-          <th class="text-end">單價</th>
-          <th class="text-end">小計</th>
+          <th>編號</th><th>商品名稱</th><th class="text-end">數量</th><th>單位</th>
+          <th class="text-end">單價</th><th class="text-end">成本</th><th class="text-end">小計</th>
           <th class="text-end">利潤</th>
         </tr>
       </thead>
       <tbody>${itemRows}</tbody>
     </table>
-    <div class="text-end">
+    <div class="text-end mt-2">
       <h5>總金額：${money(q.total_amount)}</h5>
-      <h5 class="mt-2">總成本：${money(q.total_cost || 0)}</h5>
-      <h5 class="mt-2">總利潤：${money(q.total_profit || 0)}</h5>
+      <h5 class="mt-2">總成本：${money(totalCost)}</h5>
+      <h5 class="mt-2">總利潤：${money(totalProfit)}</h5>
     </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="copyQuoteToClipboard('${id}')">複製明細</button>
+    <button class="btn btn-primary" onclick="closeModal()">關閉</button>
   </div>`,true);
 }
 
-async function delQuote(id){
-  if(confirm("確定刪除?")){
-    await sb.from("quotation_items").delete().eq("quotation_id",id);
-    await sb.from("quotations").delete().eq("id",id);
+// 刪除報價單
+async function delQuote(id) {
+  if (!confirm("確定要刪除此報價單？")) return;
+  
+  try {
+    // 先刪除明細
+    await sb.from("quotation_items").delete().eq("quotation_id", id);
+    // 再刪除主檔
+    await sb.from("quotations").delete().eq("id", id);
+    
+    alert("刪除成功！");
     loadQuotes();
+  } catch (error) {
+    console.error("刪除報價單失敗：", error);
+    alert("刪除失敗，請稍後再試！");
   }
 }
 
+// 商品歷史報價查詢
 function openProductHistory(){
   show(`<div class="modal-header"><h5>📊 商品歷史報價查詢</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body p-3">
@@ -1038,41 +1526,6 @@ function openProductHistory(){
     </div>
   </div>`,true);
 }
-
-function clearSearchFields() {
-  document.getElementById("searchProduct").value = "";
-  document.getElementById("searchDate").value = "";
-  document.getElementById("searchCustomer").value = "";
-  document.getElementById("historyBody").innerHTML = "";
-}
-
-async function batchDeleteQuotes() {
-  const selectedCheckboxes = document.querySelectorAll(".quote-checkbox:checked");
-  if (selectedCheckboxes.length === 0) {
-    alert("請至少選擇一筆報價單！");
-    return;
-  }
-
-  const confirmDelete = confirm(`確定要刪除選取的 ${selectedCheckboxes.length} 筆報價單嗎？\n刪除後無法復原！`);
-  if (!confirmDelete) return;
-
-  try {
-    const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
-    
-    for (const id of selectedIds) {
-      await sb.from("quotation_items").delete().eq("quotation_id", id);
-      await sb.from("quotations").delete().eq("id", id);
-    }
-
-    alert(`成功刪除 ${selectedCheckboxes.length} 筆報價單！`);
-    loadQuotes();
-    document.getElementById("selectAllQuotes").checked = false;
-  } catch (error) {
-    console.error("批次刪除失敗：", error);
-    alert("刪除失敗！請稍後再試或檢查網路連線。");
-  }
-}
-
 async function loadProductHistory(){
   const productKeyword = document.getElementById("searchProduct").value.trim().toLowerCase();
   const dateKeyword = document.getElementById("searchDate").value;
@@ -1141,26 +1594,48 @@ async function loadProductHistory(){
   }
 }
 
-// 新增/修正 全選/取消全選 函數
-function toggleSelectAllQuotes() {
-  // 1. 獲取全選 checkbox（對應報價單表格thead中的checkbox）
-  const selectAllCheckbox = document.querySelector("#quote table thead input[type='checkbox']");
-  
-  // 2. 空值判斷：避免元素不存在時報錯
-  if (!selectAllCheckbox) {
-    console.warn("全選按鈕未找到");
+function clearSearchFields() {
+  document.getElementById("searchProduct").value = "";
+  document.getElementById("searchDate").value = "";
+  document.getElementById("searchCustomer").value = "";
+  document.getElementById("historyBody").innerHTML = "";
+}
+
+async function searchProductHistory() {
+  const prodName = document.getElementById('historyProdName').value.trim().toLowerCase();
+  if (!prodName) {
+    alert("請輸入商品名稱！");
     return;
   }
-
-  // 3. 切換全選狀態
-  const isChecked = !selectAllCheckbox.checked;
-  selectAllCheckbox.checked = isChecked;
-
-  // 4. 選中/取消所有報價單的checkbox
-  const quoteCheckboxes = document.querySelectorAll(".quote-checkbox");
-  quoteCheckboxes.forEach(checkbox => {
-    checkbox.checked = isChecked;
+  
+  // 查詢包含該商品的報價單明細
+  const { data: items } = await sb.from("quotation_items")
+    .select(`
+      *,
+      quotations:quotation_id (quote_no, quote_date, customer_id),
+      customers:quotations.customer_id (name)
+    `)
+    .ilike("product_name", `%${prodName}%`);
+  
+  if (!items || items.length === 0) {
+    document.getElementById('historyList').innerHTML = '<tr><td colspan="7" class="text-center">無相關歷史報價</td></tr>';
+    return;
+  }
+  
+  let html = '';
+  items.forEach(item => {
+    html += `<tr>
+      <td>${item.quotations?.quote_no || '-'}</td>
+      <td>${item.quotations?.quote_date || '-'}</td>
+      <td>${item.customers?.name || '-'}</td>
+      <td>${item.product_name}</td>
+      <td class="text-end">${item.quantity}</td>
+      <td class="text-end">${money(item.unit_price)}</td>
+      <td class="text-end">${money(item.cost)}</td>
+    </tr>`;
   });
+  
+  document.getElementById('historyList').innerHTML = html;
 }
 
 // 加載所有資料
@@ -1183,6 +1658,7 @@ async function delSupplier(id){
 function editSupplier(id) {
   openSupplier(id);
 }
+
 </script>
 </body>
 </html>
