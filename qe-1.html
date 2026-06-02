@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增報價單 | 報價管理系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .modal-lg{max-width:900px;}
+    tr.dragging { opacity: 0.5; background-color: #f8f9fa; }
+    .btn-xs { padding: 0.1rem 0.3rem; font-size: 0.75rem; line-height: 1; }
+    #quoteItemsTable tr td:last-child { white-space: nowrap; }
+    .text-end { text-align: right !important; }
+    .text-center { text-align: center !important; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">📋 新增報價單</h4>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-4 mb-2">
+            <label class="form-label fw-bold">報價單號</label>
+            <input type="text" class="form-control" id="q_no" readonly placeholder="自動生成">
+          </div>
+          <div class="col-md-4 mb-2">
+            <label class="form-label fw-bold">報價日期</label>
+            <input type="date" class="form-control" id="q_date" value="">
+          </div>
+          <div class="col-md-4 mb-2">
+            <label class="form-label fw-bold">狀態</label>
+            <select class="form-select" id="q_status">
+              <option value="報價中" selected>報價中</option>
+              <option value="已成交">已成交</option>
+              <option value="模版">模版</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6 mb-2">
+            <label class="form-label fw-bold">客戶</label>
+            <select class="form-select" id="q_cust">
+              <option value="">請選擇客戶</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-2">
+            <label class="form-label fw-bold">備註</label>
+            <textarea class="form-control" id="q_remark" placeholder="請輸入備註資訊"></textarea>
+          </div>
+        </div>
+
+        <div class="border p-3 rounded mb-4 bg-light">
+          <h5 class="mb-3">📦 商品管理</h5>
+          <div class="row mb-3">
+            <div class="col-md-8 mb-2">
+              <input type="text" class="form-control" id="productSearch" placeholder="搜尋商品（代號/名稱）" oninput="searchProducts()">
+            </div>
+            <div class="col-md-4 mb-2">
+              <select class="form-select" id="productList" size="1" onchange="selectProduct()">
+                <option value="">請輸入關鍵字搜尋商品</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-2 mb-2">
+              <input type="number" class="form-control" id="p_quantity" placeholder="數量" value="1" min="1">
+            </div>
+            <div class="col-md-2 mb-2">
+              <input type="text" class="form-control" id="p_unit" placeholder="單位" readonly>
+            </div>
+            <div class="col-md-2 mb-2">
+              <input type="number" class="form-control" id="p_price" placeholder="單價" step="0.01" min="0">
+            </div>
+            <div class="col-md-2 mb-2">
+              <input type="number" class="form-control" id="p_cost" placeholder="成本" step="0.01" min="0" readonly>
+            </div>
+            <div class="col-md-2 mb-2">
+              <input type="text" class="form-control" id="p_subtotal" placeholder="小計" readonly>
+            </div>
+            <div class="col-md-2 mb-2">
+              <button class="btn btn-success w-100" onclick="addItem()">新增到報價單</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between mb-2">
+            <h5>📋 報價商品清單</h5>
+            <button class="btn btn-sm btn-secondary" onclick="saveItemOrder()">保存排序</button>
+          </div>
+          <table class="table table-bordered table-sm" id="quoteItemsTable">
+            <thead class="table-light">
+              <tr>
+                <th width="60">編號</th>
+                <th>商品名稱</th>
+                <th width="80" class="text-end">數量</th>
+                <th width="60" class="text-center">單位</th>
+                <th width="100" class="text-end">單價</th>
+                <th width="100" class="text-end">小計</th>
+                <th width="100" class="text-end">利潤</th>
+                <th width="100" class="text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="quoteItemsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="text-end mb-4">
+          <h5>總金額：<span id="totalAmount" class="text-primary">0</span></h5>
+          <h5 class="mt-2">總成本：<span id="totalCost" class="text-secondary">0</span></h5>
+          <h5 class="mt-2">總利潤：<span id="totalProfit" class="text-success">0</span></h5>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-secondary" onclick="window.history.back()">返回</button>
+          <button class="btn btn-primary" onclick="saveQuote()">儲存報價單</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let quoteItems = [];
+    let currentProduct = null;
+
+    window.onload = async function() {
+      await generateQuoteNo();
+      document.getElementById('q_date').value = new Date().toISOString().split('T')[0];
+      await loadCustomers();
+      initDragSort();
+    };
+
+    async function generateQuoteNo() {
+      const date = new Date();
+      const year = date.getFullYear().toString().slice(2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      try {
+        const { data: quotes } = await sb.from("quotations")
+          .select("quote_no")
+          .ilike("quote_no", `QT${year}${month}${day}%`)
+          .order("quote_no", { ascending: false })
+          .limit(1);
+
+        let seq = 1;
+        if (quotes && quotes.length > 0) {
+          const lastNo = quotes[0].quote_no;
+          const lastSeq = parseInt(lastNo.slice(-3));
+          seq = lastSeq + 1;
+        }
+        const quoteNo = `QT${year}${month}${day}${seq.toString().padStart(3, '0')}`;
+        document.getElementById('q_no').value = quoteNo;
+      } catch (e) {
+        document.getElementById('q_no').value = "QT" + new Date().getTime();
+      }
+    }
+
+    async function loadCustomers() {
+      try {
+        const { data } = await sb.from("customers").select("id,name");
+        const custSelect = document.getElementById('q_cust');
+        if (data) data.forEach(cust => {
+          const option = document.createElement('option');
+          option.value = cust.id;
+          option.textContent = cust.name;
+          custSelect.appendChild(option);
+        });
+      } catch (e) {}
+    }
+
+    async function searchProducts() {
+      const keyword = document.getElementById('productSearch').value.trim().toLowerCase();
+      const productList = document.getElementById('productList');
+      
+      if (!keyword) {
+        productList.innerHTML = '<option value="">請輸入關鍵字搜尋商品</option>';
+        currentProduct = null; clearProductForm(); return;
+      }
+
+      try {
+        const { data } = await sb.from("products")
+          .select("*")
+          .or(`product_code.ilike.%${keyword}%,product_name.ilike.%${keyword}%`);
+
+        productList.innerHTML = data?.length ? 
+          data.map(p => `<option value="${p.id}">[${p.product_code}] ${p.product_name}</option>`).join('')
+          : '<option value="">無符合的商品</option>';
+      } catch (e) {}
+    }
+
+    async function selectProduct() {
+      const productId = document.getElementById('productList').value;
+      if (!productId) { currentProduct = null; clearProductForm(); return; }
+
+      try {
+        const { data } = await sb.from("products").select("*").eq("id", productId).single();
+        if (data) {
+          currentProduct = data;
+          document.getElementById('p_unit').value = data.unit || '';
+          document.getElementById('p_price').value = data.sale_price || 0;
+          document.getElementById('p_cost').value = data.cost || 0;
+          calculateSubtotal();
+        }
+      } catch (e) {}
+    }
+
+    function calculateSubtotal() {
+      const qty = parseFloat(document.getElementById('p_quantity').value) || 1;
+      const price = parseFloat(document.getElementById('p_price').value) || 0;
+      document.getElementById('p_subtotal').value = money(qty * price);
+    }
+
+    function clearProductForm() {
+      document.getElementById('p_unit').value = '';
+      document.getElementById('p_price').value = '';
+      document.getElementById('p_cost').value = '';
+      document.getElementById('p_subtotal').value = '';
+      document.getElementById('p_quantity').value = 1;
+    }
+
+    function addItem() {
+      if (!currentProduct) { alert("請先選擇商品！"); return; }
+      const qty = parseFloat(document.getElementById('p_quantity').value) || 1;
+      const price = parseFloat(document.getElementById('p_price').value) || 0;
+      const cost = parseFloat(document.getElementById('p_cost').value) || 0;
+      const subtotal = qty * price;
+      const profit = subtotal - (cost * qty);
+
+      quoteItems.push({
+        id: Date.now().toString(),
+        product_id: currentProduct.id,
+        product_name: currentProduct.product_name,
+        product_code: currentProduct.product_code,
+        quantity: qty, unit: currentProduct.unit || '',
+        unit_price: price, cost: cost, subtotal: subtotal, profit: profit
+      });
+      renderQuoteItems(); calculateTotals();
+      document.getElementById('productList').value = '';
+      clearProductForm(); currentProduct = null;
+    }
+
+    function renderQuoteItems() {
+      const tbody = document.getElementById('quoteItemsBody');
+      tbody.innerHTML = quoteItems.length ? quoteItems.map((item, i) => `
+        <tr data-item-id="${item.id}" data-display-order="${i}">
+          <td class="text-center">NO.${i+1}</td>
+          <td>${item.product_name}</td>
+          <td class="text-end">${item.quantity}</td>
+          <td class="text-center">${item.unit || '-'}</td>
+          <td class="text-end">${money(item.unit_price)}</td>
+          <td class="text-end">${money(item.subtotal)}</td>
+          <td class="text-end">${money(item.profit)}</td>
+          <td class="text-center">
+            <button class="btn btn-xs btn-secondary" onclick="moveItemUp(this)">↑</button>
+            <button class="btn btn-xs btn-secondary" onclick="moveItemDown(this)">↓</button>
+            <button class="btn btn-xs btn-danger" onclick="removeItem('${item.id}')">✕</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="8" class="text-center">尚未添加商品</td></tr>';
+    }
+
+    function calculateTotals() {
+      const total = quoteItems.reduce((s,i)=>s+i.subtotal,0);
+      const cost = quoteItems.reduce((s,i)=>s+i.cost*i.quantity,0);
+      document.getElementById('totalAmount').textContent = money(total);
+      document.getElementById('totalCost').textContent = money(cost);
+      document.getElementById('totalProfit').textContent = money(total-cost);
+    }
+
+    function removeItem(id) {
+      quoteItems = quoteItems.filter(i=>i.id!==id);
+      renderQuoteItems(); calculateTotals();
+    }
+
+    function moveItemUp(btn) {
+      const i = parseInt(btn.closest('tr').dataset.displayOrder);
+      if(i>0){[quoteItems[i],quoteItems[i-1]]=[quoteItems[i-1],quoteItems[i]];renderQuoteItems();}
+    }
+
+    function moveItemDown(btn) {
+      const i = parseInt(btn.closest('tr').dataset.displayOrder);
+      if(i<quoteItems.length-1){[quoteItems[i],quoteItems[i+1]]=[quoteItems[i+1],quoteItems[i]];renderQuoteItems();}
+    }
+
+    function saveItemOrder() { alert("排序已保存"); }
+
+    function initDragSort() {
+      const tbody = document.querySelector('#quoteItemsTable tbody');
+      tbody.addEventListener('dragstart',e=>e.target.closest('tr')?.classList.add('dragging'));
+      tbody.addEventListener('dragend',e=>e.target.closest('tr')?.classList.remove('dragging'));
+      tbody.addEventListener('dragover',e=>{
+        e.preventDefault();
+        const drag = document.querySelector('.dragging');
+        if(!drag) return;
+        const after = getDragAfterElement(tbody,e.clientY);
+        after ? tbody.insertBefore(drag,after) : tbody.appendChild(drag);
+      });
+    }
+
+    function getDragAfterElement(c, y) {
+      return [...c.querySelectorAll('tr:not(.dragging)')].reduce((clos,child)=>{
+        const b = child.getBoundingClientRect();
+        const o = y - b.top - b.height/2;
+        return o<0&&o>clos.o ? {o,el:child} : clos;
+      },{o:-Infinity}).el;
+    }
+
+    async function saveQuote() {
+      const no = document.getElementById('q_no').value.trim();
+      const date = document.getElementById('q_date').value.trim();
+      const cust = document.getElementById('q_cust').value.trim();
+      if(!no||!date||!cust||quoteItems.length===0){alert("請填寫完整並加入商品");return;}
+
+      try {
+        const {data:q,error:e1} = await sb.from("quotations").insert([{
+          quote_no: no, quote_date: date, customer_id: cust,
+          status: document.getElementById('q_status').value,
+          remark: document.getElementById('q_remark').value.trim()||null,
+          total_amount: quoteItems.reduce((s,i)=>s+i.subtotal,0)
+        }]).select().single();
+        if(e1)throw e1;
+
+        const items = quoteItems.map((i,idx)=>({
+          quotation_id: q.id, product_id: i.product_id, product_name: i.product_name,
+          product_code: i.product_code, quantity: i.quantity, unit: i.unit,
+          unit_price: i.unit_price, cost: i.cost, subtotal: i.subtotal, display_order: idx
+        }));
+        const {error:e2} = await sb.from("quotation_items").insert(items);
+        if(e2)throw e2;
+
+        alert("儲存成功！");
+        quoteItems=[];renderQuoteItems();calculateTotals();
+        await generateQuoteNo();
+        document.getElementById('q_remark').value='';
+        document.getElementById('q_cust').value='';
+      } catch (e) {
+        alert("儲存失敗："+e.message);
+      }
+    }
+
+    function money(n) {
+      return isNaN(n) ? '0' : n.toLocaleString('zh-TW',{minimumFractionDigits:0,maximumFractionDigits:2});
+    }
+  </script>
+</body>
+</html>
