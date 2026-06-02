@@ -118,6 +118,7 @@
       <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
       <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
       <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
+      <button class="btn btn-sm btn-info" onclick="openIndependentQuotePage()">獨立報價單網頁</button>
       <button class="btn btn-sm btn-dark me-2" onclick="openImportOldQuote()">匯入舊報價單</button>
     </div>
   </div>
@@ -1099,7 +1100,11 @@ window.addQuoteItem = function() {
   delete window.selectedProductUnit;
 };
 
-
+// ========== 新增：開啟獨立報價單網頁 ==========
+function openIndependentQuotePage() {
+  // 開啟新視窗打開 nq.html，_blank 表示新視窗
+  window.open('nq.html', '_blank');
+}
 
 // 修正：填充商品資訊 - 確保成本正確帶入
 function fillProduct() {
