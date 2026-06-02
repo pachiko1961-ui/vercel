@@ -124,6 +124,7 @@
       <div class="d-flex gap-2 mb-2">
         <input class="form-control flex-grow-1" placeholder="搜尋：單號/客戶/商品/狀態" oninput="loadQuotes()">
         <select class="form-select w-auto" id="quoteSortBy" onchange="loadQuotes()">
+          <option value="last_days" selected>只顯示當天</option>          
           <option value="quote_no_desc">報價單號 (最新)</option>          
           <option value="customer_name_asc">客戶 (升序)</option>
           <option value="customer_name_desc">客戶 (降序)</option>
@@ -133,6 +134,7 @@
           <option value="created_at_asc">新增時間 (最舊)</option>
           <option value="status_asc">狀態 (字母排序)</option>
           <option value="quote_date_desc">報價日期 (最新)</option>
+	  
         </select>
       </div>
       <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
@@ -504,7 +506,7 @@ async function delProduct(id){if(confirm("確定刪除?")){await sb.from("produc
 // ========== 報價單管理 - 核心修正：成本/利潤計算 ==========
 async function loadQuotes() {
   const kw = document.querySelector("#quote input").value.trim().toLowerCase();
-  const sortBy = document.getElementById("quoteSortBy")?.value || "created_at_desc";
+  const sortBy = document.getElementById("quoteSortBy")?.value || "last_days";
   
   let sortColumn = "created_at";
   let sortOrder = false;
@@ -512,6 +514,8 @@ async function loadQuotes() {
   let sortByProductContent = false;
   let customerSortOrder = true;
   let productContentSortOrder = true;
+  // 新增：是否過濾最近當天
+  let filterLastDays = false;
   
   switch(sortBy) {
     case "created_at_asc":
@@ -546,14 +550,32 @@ async function loadQuotes() {
       sortByProductContent = true;
       productContentSortOrder = false;
       break;
+    // 新增：當天過濾邏輯
+    case "last_days":
+      filterLastDays = true;
+      sortColumn = "quote_no"; // 按報價單號排序
+      sortOrder = false; // 最新的在前
+      break;
     default:
       sortColumn = "created_at";
       sortOrder = false;
   }
   
-  const { data: quotes, error } = await sb.from("quotations")
-    .select("*")
-    .order(sortColumn, { ascending: sortOrder });
+  // 計算當天前的日期（格式：YYYY-MM-DD）
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate());
+  const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+
+  // 查詢報價單：增加日期過濾條件
+  let quotesQuery = sb.from("quotations").select("*");
+  
+  // 如果開啟最近當天過濾，添加日期條件
+  if (filterLastDays) {
+    quotesQuery = quotesQuery.gte("quote_date", threeDaysAgoStr);
+  }
+  
+  // 執行查詢並排序
+  const { data: quotes, error } = await quotesQuery.order(sortColumn, { ascending: sortOrder });
 
   if (error || !quotes) { 
     quoteList.innerHTML = "<tr><td colspan='7' class='text-center'>載入失敗</td></tr>"; 
@@ -827,7 +849,7 @@ async function editQuote(id){
       <div class="col-6"><textarea class="form-control" id="q_remark" placeholder="備註">${q.remark || ""}</textarea></div>
     </div>
     <div class="mb-2">
-      <button class="btn btn-sm btn-success" onclick="saveItemOrder('${id}')">保存商品排序</button>
+      <button class="btn btn-sm btn-danger" onclick="saveItemOrder('${id}')">保存商品排序</button>
       <small class="text-muted ms-2">調整順序後請點擊保存</small>
     </div>
     <table class="table table-sm table-bordered" id="quoteItemsTable">
@@ -852,7 +874,7 @@ async function editQuote(id){
     </div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-secondary" onclick="copyQuoteToClipboard('${id}')">複製</button>
+    <button class="btn btn-secondary" onclick="copyQuoteToClipboard('${id}')">複製明細</button>
     <button class="btn btn-primary" onclick="updateQuote('${id}')">儲存</button>
   </div>`,true);
 
@@ -1695,7 +1717,7 @@ async function saveImportedQuote() {
     
     await Promise.all(itemPromises);
     
-    alert("匯入並儲存報價單成功！");
+    //alert("匯入並儲存報價單成功！");
     closeModal();
     loadQuotes();
   } catch (error) {
@@ -1759,7 +1781,7 @@ function uid() {
 // 彈窗顯示函數 (原程式已有，若無需新增)
 function show(html, lg = false) {
   document.getElementById('mdBody').innerHTML = html;
-  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-lg' : 'modal-dialog';
+  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-xl' : 'modal-dialog';
   modal.show();
 }
 
@@ -1771,7 +1793,7 @@ function closeModal() {
 
 // 顯示模態框
 function show(html, isLarge = false) {
-  document.getElementById('mdSize').className = isLarge ? 'modal-dialog modal-lg' : 'modal-dialog';
+  document.getElementById('mdSize').className = isLarge ? 'modal-dialog modal-xl' : 'modal-dialog';
   document.getElementById('mdBody').innerHTML = html;
   modal.show();
 }
@@ -2025,7 +2047,7 @@ async function saveImportedQuote() {
     
     await Promise.all(itemPromises);
     
-    alert("匯入舊報價單並生成新報價單成功！");
+    //alert("匯入舊報價單並生成新報價單成功！");
     closeModal();
     loadQuotes();
   } catch (error) {
@@ -2061,7 +2083,7 @@ async function register() {
 // 輔助函數：彈窗顯示（保留原功能）
 function show(html, lg) {
   document.getElementById('mdBody').innerHTML = html;
-  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-lg' : 'modal-dialog';
+  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-xl' : 'modal-dialog';
   modal.show();
 }
 
@@ -2082,7 +2104,7 @@ function uid() {
 // 彈窗顯示函數
 function show(html, lg=false) {
   document.getElementById('mdBody').innerHTML = html;
-  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-lg' : 'modal-dialog';
+  document.getElementById('mdSize').className = lg ? 'modal-dialog modal-xl' : 'modal-dialog';
   modal.show();
 }
 
@@ -2320,7 +2342,7 @@ function openProductHistory(){
       <table class="table table-sm table-bordered">
         <thead class="table-light">
           <tr>
-            <th>報價日期</th><th>客戶</th><th>商品</th><th>數量</th><th>單位</th><th>單價</th><th>小計</th><th>利潤</th><th>單號</th>
+            <th>報價日期</th><th>客戶</th><th>商品</th><th>數量</th><th>單位</th><th>單價</th><th>小計</th><th>單號</th>
           </tr>
         </thead>
         <tbody id="historyBody"></tbody>
@@ -2384,11 +2406,9 @@ async function loadProductHistory(){
         <td>${it.unit || "-"}</td>
         <td class="text-end">${money(it.unit_price)}</td>
         <td class="text-end">${money(it.subtotal)}</td>
-        <td class="text-end">${money(it.profit || 0)}</td>
         <td>${q.quote_no}</td>
       </tr>`;
     }
-
     b.innerHTML = h || "<tr><td colspan='9' class='text-center'>查無資料</td></tr>";
   } catch (error) {
     console.error("載入歷史報價失敗：", error);
