@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>報價管理系統</title>
+  <title><<銀河資訊>>報價管理系統</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>.modal-lg{max-width:900px;}
@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<!-- 原有 HTML 結構不變 -->
+<!-- 原有 HTML 結構不變 --> x
 <div id="loginPanel" class="d-flex vh-100 align-items-center justify-content-center">
   <div class="card p-4 shadow-sm" style="width:400px">
     <h3 class="text-center mb-3">🔐 系統登入</h3>
@@ -32,7 +32,7 @@
       <input class="form-control mb-2" id="email" placeholder="電子信箱" type="email">
       <input class="form-control mb-2" id="password" placeholder="密碼" type="password">
       <button class="btn btn-primary w-100 mb-2" onclick="login()">登入</button>
-      <button class="btn btn-outline-secondary w-100" onclick="showRegister()">註冊</button>
+      <!-- 隱藏這行便看不到註冊按鍵 <button class="btn btn-success w-100 mb-2" onclick="register()">註冊</button> -->
     </div>
   </div>
 </div>
@@ -40,7 +40,7 @@
 <div id="mainPanel" class="container py-3 d-none">
   <!-- 原有導航/面板結構不變 -->
   <div class="d-flex justify-content-between mb-2">
-    <h4>📋 報價管理系統(56-ok)</h4>
+    <h4>📋 <<銀河資訊>>報價管理系統</h4>
     <div>
       <span id="userEmail" class="me-2"></span>
       <button class="btn btn-sm btn-danger" onclick="logout()">登出</button>
@@ -55,32 +55,47 @@
 </ul>
 
   <div class="tab-content">
-    <!-- 客戶面板不變 -->
+    <!-- 客戶管理面板 -->
     <div id="cust" class="tab-pane fade">
-  <div class="d-flex justify-content-between mb-2"><h5>客戶管理</h5><button class="btn btn-sm btn-primary" onclick="openCustomer()">新增</button></div>
+  <div class="d-flex justify-content-between mb-2"><h5>客戶管理</h5><button class="btn btn-sm btn-primary" onclick="openCustomer()">新增客戶</button></div>
   <input class="form-control mb-2" placeholder="搜尋" oninput="loadCustomers()">
-  <table class="table table-bordered table-sm"><thead><tr><th>名稱</th><th>聯絡人</th><th>電話</th><th>操作</th></tr></thead><tbody id="custList"></tbody></table>
+  <table class="table table-bordered table-sm"><thead><tr>
+     <th style="width:90px">客戶名稱</th>
+     <th style="width:180px">客戶聯絡人</th>
+     <th style="width:120px">客戶電話</th>
+     <th style="width:60px">操作</th>
+  </thead><tbody id="custList"></tbody>
+</table>
 </div>
 
-    <!-- 廠商面板 - 結構不變 -->
+    <!-- 廠商管理面板 -->
     <div id="supp" class="tab-pane fade">
-      <div class="d-flex justify-content-between mb-2"><h5>廠商管理</h5><button class="btn btn-sm btn-primary" onclick="openSupplier()">新增</button></div>
+      <div class="d-flex justify-content-between mb-2"><h5>廠商管理</h5><button class="btn btn-sm btn-primary" onclick="openSupplier()">新增廠商</button></div>
       <input class="form-control mb-2" placeholder="搜尋" oninput="loadSuppliers()">
-      <table class="table table-bordered table-sm"><thead><tr><th>名稱</th><th>聯絡人</th><th>電話</th><th>操作</th></tr></thead><tbody id="suppList"></tbody></table>
+      <table class="table table-bordered table-sm">
+         <thead><tr>
+            <th style="width:90px">廠商名稱</th>
+            <th style="width:180px">廠商聯絡人</th>
+            <th style="width:120px">廠商電話</th>
+            <th style="width:60px">操作</th>
+         </tr></thead>
+         <tbody id="suppList"></tbody>
+      </table>
     </div>
 
-    <!-- 商品面板 - 新增排序下拉選單 -->
+    <!-- 商品管理面板 -->
     <div id="prod" class="tab-pane fade">
       <div class="d-flex justify-content-between mb-2">
-        <h5>商品管理</h5>
+        <h5 style="background-color: #4535dc; color: white; padding: 2px; border-radius: 2px;">商品管理</h5>
         <div>
           <button class="btn btn-sm btn-info me-2" onclick="openSpecTable()">規格表</button>
-          <button class="btn btn-sm btn-dark me-2" onclick="importOldProduct()">匯入舊商品轉新增</button> <!-- 新增按鈕 -->
-          <button class="btn btn-sm btn-primary" onclick="openProduct()">新增</button>
+          <button class="btn btn-sm btn-dark me-2" onclick="importOldProduct()">匯入轉新增商品</button>
+          <button class="btn btn-sm btn-secondary me-2" onclick="openProductSearchModal()">搜尋及編輯商品</button>
+          <button class="btn btn-sm btn-primary" onclick="openProduct()">新增商品</button>
         </div>
       </div>
       <div class="d-flex gap-2 mb-2">
-        <input class="form-control flex-grow-1" placeholder="搜尋" oninput="loadProducts()">
+        
         <select class="form-select w-auto" id="prodSortBy" onchange="loadProducts()">
           <option value="product_code_asc">商品代號 (升序)</option>
 	  <option value="product_code_desc">商品代號 (降序)</option>
@@ -88,38 +103,38 @@
           <option value="product_name_desc">商品名稱 (降序)</option>
 	  <option value="update_supplier_asc">更新的廠商 (升序)</option>
           <option value="update_supplier_desc">更新的廠商 (降序)</option>
-          <option value="update_date_desc">更新日期 (最新)</option>
+          <option value="update_date_desc" selected>更新日期 (最新)</option>
         </select>
       </div>
 
       <table class="table table-bordered table-sm" style="table-layout:fixed; width:100%;">
         <thead>
           <tr>
-            <th style="width:120px">代號</th>
-            <th style="width:260px">名稱</th>
+            <th style="width:120px">商品代號</th>
+            <th style="width:260px">商品名稱</th>
             <th class="text-center" style="width:26px">單位</th>
             <th class="text-center" style="width:40px">售價</th>
             <th class="text-center" style="width:40px">成本</th>
             <th style="width:65px">資料更新日期</th>
             <th style="width:60px">更新的廠商</th>
-            <th style="width:80px">操作</th>
+            <th style="width:90px">操作</th>
           </tr>
         </thead>
         <tbody id="prodList"></tbody>
       </table>
     </div>
 
-    <!-- 報價單面板 - 新增排序下拉選單 -->
+    <!-- 報價單管理面板 -->
     <div id="quote" class="tab-pane fade show active">
   <div class="d-flex justify-content-between mb-2">
-    <h5>報價單管理</h5>
+    <h5 style="background-color: #dc3545; color: white; padding: 2px; border-radius: 2px;">報價單管理</h5>
     <div>
       <button class="btn btn-sm btn-danger me-2" onclick="batchDeleteQuotes()">刪除選取</button>
       <button class="btn btn-sm btn-secondary me-2" onclick="toggleSelectAllQuotes()">全選/取消全選</button>
       <button class="btn btn-sm btn-primary me-2" onclick="openProductHistory()">商品歷史報價查詢</button>
-      <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
+      <button class="btn btn-sm btn-dark me-2" onclick="openImportOldQuote()">匯入轉新增報價單</button>
       <button class="btn btn-sm btn-info" onclick="openIndependentQuotePage()">獨立報價單網頁</button>
-      <button class="btn btn-sm btn-dark me-2" onclick="openImportOldQuote()">匯入舊報價單</button>
+      <button class="btn btn-sm btn-success" onclick="openQuote()">新增報價單</button>
     </div>
   </div>
       <div class="d-flex gap-2 mb-2">
@@ -186,7 +201,7 @@ async function checkAuth() {
     loadProducts();
   }
 }
-// ========== 新增函數：開啟廠商網址 ==========
+// ========== 開啟廠商網址 ==========
 window.openSupplierUrl = async function(id) {
   try {
     const { data } = await sb.from("suppliers").select("url").eq("id", id).single();
@@ -201,14 +216,14 @@ window.openSupplierUrl = async function(id) {
   }
 };
 
-// ========== 廠商管理 ==========
+// ========== 打開廠商資料 ==========
 function openSupplier(id){
   show(`<div class="modal-header"><h5>${id?"編輯":"新增"}廠商</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
-    <input class="form-control mb-2" id="s_name" placeholder="名稱">
-    <input class="form-control mb-2" id="s_contact" placeholder="聯絡人">
-    <input class="form-control mb-2" id="s_phone" placeholder="電話">
-    <textarea class="form-control mb-2" id="s_addr" placeholder="地址"></textarea>
+    <input class="form-control mb-2" id="s_name" placeholder="廠商名稱">
+    <input class="form-control mb-2" id="s_contact" placeholder="廠商聯絡人">
+    <input class="form-control mb-2" id="s_phone" placeholder="廠商電話">
+    <textarea class="form-control mb-2" id="s_addr" placeholder="廠商地址"></textarea>
     <input class="form-control mb-2" id="s_url" placeholder="廠商網址 (選填)" type="url">
   </div>
   <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateSupplier('${id}')`:'saveSupplier()'}">儲存</button></div>`);
@@ -223,7 +238,7 @@ function openSupplier(id){
     });
   }
 }
-
+// ========== 儲存廠商資料 ==========
 async function saveSupplier(){
   await sb.from("suppliers").insert([{
     name:s_name.value,
@@ -236,7 +251,7 @@ async function saveSupplier(){
   closeModal();
   loadSuppliers();
 }
-
+// ========== 更新廠商資料 ==========
 async function updateSupplier(id){
   await sb.from("suppliers").update({
     name:s_name.value,
@@ -259,9 +274,9 @@ async function loadSuppliers(){
       <td>${i.contact_person||"-"}</td>
       <td>${i.phone||"-"}</td>
       <td>
-        <button class='btn btn-sm btn-info me-1' onclick='openSupplierUrl("${i.id}")'>網</button>
-        <button class='btn btn-sm btn-warning me-1' onclick='editSupplier("${i.id}")'>編</button>
-        <button class='btn btn-sm btn-danger' onclick='delSupplier("${i.id}")'>刪</button>
+        <button class='btn btn-sm btn-info me-1' onclick='openSupplierUrl("${i.id}")'>網頁</button>
+        <button class='btn btn-sm btn-warning me-1' onclick='editSupplier("${i.id}")'>編輯</button>
+        <button class='btn btn-sm btn-danger' onclick='delSupplier("${i.id}")'>刪除</button>
       </td>
     </tr>`;
   });
@@ -276,13 +291,13 @@ window.editProduct = async function(id){
   show(`<div class="modal-header"><h5>${id?"編輯":"新增"}商品</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
     <input class="form-control mb-2" id="p_code" placeholder="商品代號">
-    <input class="form-control mb-2" id="p_name" placeholder="名稱">
+    <input class="form-control mb-2" id="p_name" placeholder="商品名稱">
     <input class="form-control mb-2" id="p_unit" placeholder="單位">
     <input class="form-control mb-2" id="p_price" type="number" placeholder="售價" style="text-align: right;">
     <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本" style="text-align: right;">
     <input class="form-control mb-2" id="p_update_date" type="date" placeholder="資料更新日期">
     <select class="form-control mb-2" id="p_update_supplier">
-      <option value="">選擇更新的廠商</option>
+      <option value="">選擇進貨的廠商</option>
       ${supplierOptions}
     </select>
     <input class="form-control mb-2" id="p_url" placeholder="商品網址 (選填)" type="url">
@@ -305,7 +320,7 @@ window.editProduct = async function(id){
     p_update_date.value = new Date().toISOString().split('T')[0];
   }
 };
-
+//打開商品網站
 window.openProductUrl = async function(id) {
   try {
     const { data } = await sb.from("products").select("product_url").eq("id", id).single();
@@ -320,8 +335,9 @@ window.openProductUrl = async function(id) {
   }
 };
 
+//載入商品
 async function loadProducts(){
-  const kw=document.querySelector("#prod input").value;
+  // 移除搜尋關鍵字相關程式
   const sortBy = document.getElementById("prodSortBy")?.value || "created_at_desc";
   
   let sortColumn = "created_at";
@@ -366,9 +382,8 @@ async function loadProducts(){
       sortOrder = true;
   }
   
-  let {data}=await sb.from("products")
-    .select("*")
-    .or(`product_code.ilike.%${kw}%,product_name.ilike.%${kw}%`);
+  // 移除搜尋條件，查詢所有商品
+  let {data}=await sb.from("products").select("*");
   
   if (sortBySupplier && data) {
     const { data: allSuppliers } = await sb.from("suppliers").select("id,name");
@@ -422,9 +437,9 @@ async function loadProducts(){
         <td>${i.update_date || "-"}</td>
         <td>${supplierName}</td>
         <td>
-          <button class='btn btn-sm btn-info me-1' onclick='openProductUrl("${i.id}")'>網</button>
-          <button class='btn btn-sm btn-warning me-1' onclick='editProduct("${i.id}")'>編</button>
-          <button class='btn btn-sm btn-danger' onclick='delProduct("${i.id}")'>刪</button>
+          <button class='btn btn-sm btn-info me-1' onclick='openProductUrl("${i.id}")'>網頁</button>
+          <button class='btn btn-sm btn-warning me-1' onclick='editProduct("${i.id}")'>編輯</button>
+          <button class='btn btn-sm btn-danger' onclick='delProduct("${i.id}")'>刪除</button>
         </td>
       </tr>`;
     }
@@ -432,6 +447,7 @@ async function loadProducts(){
   prodList.innerHTML=h;
 }
 
+//打開商品資料
 async function openProduct(id){
   const { data: suppliers } = await sb.from("suppliers").select("id,name");
   const supplierOptions = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -439,13 +455,13 @@ async function openProduct(id){
   show(`<div class="modal-header"><h5>${id?"編輯":"新增"}商品</h5><button class="btn-close" onclick="closeModal()"></button></div>
   <div class="modal-body">
     <input class="form-control mb-2" id="p_code" placeholder="商品代號">
-    <input class="form-control mb-2" id="p_name" placeholder="名稱">
+    <input class="form-control mb-2" id="p_name" placeholder="商品名稱">
     <input class="form-control mb-2" id="p_unit" placeholder="單位">
     <input class="form-control mb-2" id="p_price" type="number" placeholder="售價" style="text-align: right;">
     <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本" style="text-align: right;">
     <input class="form-control mb-2" id="p_update_date" type="date" placeholder="資料更新日期">
     <select class="form-control mb-2" id="p_update_supplier">
-      <option value="">選擇更新的廠商</option>
+      <option value="">選擇進貨的廠商</option>
       ${supplierOptions}
     </select>
     <input class="form-control mb-2" id="p_url" placeholder="商品網址 (選填)" type="url">
@@ -469,6 +485,7 @@ async function openProduct(id){
   }
 }
 
+//儲存商品資料
 async function saveProduct(){
   await sb.from("products").insert([{
     product_code:p_code.value,
@@ -486,6 +503,7 @@ async function saveProduct(){
   loadProducts();
 }
 
+//更新商品資料
 async function updateProduct(id){
   await sb.from("products").update({
     product_code:p_code.value,
@@ -502,7 +520,170 @@ async function updateProduct(id){
   loadProducts();
 }
 
+//刪除商品資料
 async function delProduct(id){if(confirm("確定刪除?")){await sb.from("products").delete().eq("id",id);loadProducts();}}
+
+// 打開商品搜尋彈窗
+function openProductSearchModal() {
+  // 先獲取所有廠商列表（用於搜尋畫面的廠商篩選）
+  sb.from("suppliers").select("id,name").then(({ data: suppliers }) => {
+    const supplierOptions = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    
+    // 構建搜尋彈窗內容
+    const searchModalContent = `
+      <div class="modal-header">
+        <h5 class="modal-title">🔍 商品進階搜尋</h5>
+        <button type="button" class="btn-close" onclick="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">商品名稱</label>
+            <input type="text" class="form-control" id="search_product_name" placeholder="輸入商品名稱關鍵字">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">商品代號</label>
+            <input type="text" class="form-control" id="search_product_code" placeholder="輸入商品代號關鍵字">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">更新的廠商</label>
+            <select class="form-select" id="search_supplier">
+              <option value="">全部廠商</option>
+              ${supplierOptions}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">備註</label>
+            <input type="text" class="form-control" id="search_remark" placeholder="輸入備註關鍵字">
+          </div>
+        </div>
+
+        <!-- 搜尋按鈕 + 清空搜尋按鈕 -->
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-primary flex-grow-1" onclick="doProductSearch()">執行搜尋</button>
+          <button class="btn btn-outline-secondary flex-grow-1" onclick="clearSearchConditions()">清空搜尋</button>
+        </div>
+        
+        <!-- 搜尋結果表格 -->
+        <div class="mt-3">
+          <h6>搜尋結果</h6>
+          <div style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+                <tr>
+                  <th style="width:120px">代號</th>
+                  <th style="width:260px">名稱</th>
+                  <th class="text-center" style="width:26px">單位</th>
+                  <th class="text-center" style="width:40px">售價</th>
+                  <th class="text-center" style="width:40px">成本</th>
+                  <th style="width:65px">更新日期</th>
+                  <th style="width:60px">更新廠商</th>
+                  <th style="width:80px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="productSearchResult"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">關閉</button>
+      </div>
+    `;
+    
+    // 打開彈窗（使用現有modal元件）
+    show(searchModalContent, true);
+    // 設定彈窗大小為超大尺寸
+    document.getElementById('mdSize').classList.add('modal-xl');
+  });
+}
+
+// 執行商品進階搜尋
+async function doProductSearch() {
+  // 獲取搜尋條件
+  const searchName = document.getElementById('search_product_name').value.trim().toLowerCase();
+  const searchCode = document.getElementById('search_product_code').value.trim().toLowerCase();
+  const searchSupplierId = document.getElementById('search_supplier').value;
+  const searchRemark = document.getElementById('search_remark').value.trim().toLowerCase();
+  
+  // 構建查詢條件
+  let query = sb.from("products").select("*");
+  
+  // 商品名稱模糊搜尋
+  if (searchName) {
+    query = query.ilike("product_name", `%${searchName}%`);
+  }
+  
+  // 商品代號模糊搜尋
+  if (searchCode) {
+    query = query.ilike("product_code", `%${searchCode}%`);
+  }
+  
+  // 廠商篩選
+  if (searchSupplierId) {
+    query = query.eq("update_supplier_id", searchSupplierId);
+  }
+  
+  // 備註模糊搜尋
+  if (searchRemark) {
+    query = query.ilike("remark", `%${searchRemark}%`);
+  }
+  
+  // 執行查詢
+  const { data: products, error } = await query;
+  
+  if (error) {
+    alert("搜尋失敗：" + error.message);
+    return;
+  }
+  
+  // 獲取廠商對映表（用於顯示廠商名稱）
+  const { data: allSuppliers } = await sb.from("suppliers").select("id,name");
+  const supplierMap = {};
+  allSuppliers.forEach(s => {
+    supplierMap[s.id] = s.name || "未設定";
+  });
+  
+  // 渲染搜尋結果
+  let resultHtml = "";
+  if (products && products.length > 0) {
+    products.forEach(item => {
+      const supplierName = supplierMap[item.update_supplier_id] || "-";
+      resultHtml += `
+        <tr>
+          <td>${item.product_code}</td>
+          <td>${item.product_name}</td>
+          <td class="text-center">${item.unit}</td>
+          <td class="text-end">${money(item.sale_price)}</td>
+          <td class="text-end">${money(item.cost || 0)}</td>
+          <td>${item.update_date || "-"}</td>
+          <td>${supplierName}</td>
+          <td>
+            <button class='btn btn-sm btn-info me-1' onclick='openProductUrl("${item.id}")'>網</button>
+            <button class='btn btn-sm btn-warning me-1' onclick='editProduct("${item.id}")'>編</button>
+            <button class='btn btn-sm btn-danger' onclick='delProduct("${item.id}")'>刪</button>
+          </td>
+        </tr>
+      `;
+    });
+  } else {
+    resultHtml = `<tr><td colspan="8" class="text-center">無符合條件的商品</td></tr>`;
+  }
+  
+  document.getElementById('productSearchResult').innerHTML = resultHtml;
+}
+
+// ========== 新增：清空搜尋條件 & 結果 ==========
+function clearSearchConditions() {
+  // 清空所有輸入框
+  document.getElementById('search_product_name').value = '';
+  document.getElementById('search_product_code').value = '';
+  document.getElementById('search_supplier').value = '';
+  document.getElementById('search_remark').value = '';
+
+  // 清空搜尋結果表格
+  document.getElementById('productSearchResult').innerHTML = '';
+}
 
 // ========== 報價單管理 - 核心修正：成本/利潤計算 ==========
 async function loadQuotes() {
@@ -633,9 +814,9 @@ async function loadQuotes() {
         <td>${productText}</td>
         <td>${q.status || "報價中"}</td>
         <td>
-          <button class='btn btn-sm btn-info' onclick='viewQuote("${q.id}")'>檢</button>
-          <button class='btn btn-sm btn-warning' onclick='editQuote("${q.id}")'>編</button>
-          <button class='btn btn-sm btn-danger' onclick='delQuote("${q.id}")'>刪</button>
+          <button class='btn btn-sm btn-info' onclick='viewQuote("${q.id}")'>檢視</button>
+          <button class='btn btn-sm btn-warning' onclick='editQuote("${q.id}")'>編輯</button>
+          <button class='btn btn-sm btn-danger' onclick='delQuote("${q.id}")'>刪除</button>
         </td>
       </tr>`);
     }
@@ -643,7 +824,7 @@ async function loadQuotes() {
   quoteList.innerHTML = rows.join("") || "<tr><td colspan='7' class='text-center'>無資料</td></tr>";
 }
 
-// ========== 新增：匯入舊商品編輯後另存為新商品（新增搜尋功能） ==========
+// ========== 匯入舊商品編輯後另存為新商品 ==========
 async function importOldProduct() {
   // 獲取所有商品列表（用於下拉選擇）
   const { data: allProducts } = await sb.from("products").select("id,product_code,product_name");
@@ -703,8 +884,8 @@ async function importOldProduct() {
     `;
   });
 }
+
 // 加載選擇的舊商品數據並開啟編輯表單（另存為新商品）
-// 其餘原有程式碼不變（loadOldProductData、saveImportedProduct 保持原邏輯）
 async function loadOldProductData() {
   const oldProdId = document.getElementById('importOldProdId').value;
   if (!oldProdId) {
@@ -750,7 +931,7 @@ async function loadOldProductData() {
       <input class="form-control mb-2" id="p_cost" type="number" placeholder="成本" style="text-align: right;" value="${oldProduct.cost || ''}">
       <input class="form-control mb-2" id="p_update_date" type="date" placeholder="資料更新日期" value="${oldProduct.update_date || new Date().toISOString().split('T')[0]}">
       <select class="form-control mb-2" id="p_update_supplier">
-        <option value="">選擇更新的廠商</option>
+        <option value="">選擇進貨的廠商</option>
         ${supplierOptions}
       </select>
       <input class="form-control mb-2" id="p_url" placeholder="商品網址 (選填)" type="url" value="${oldProduct.product_url || ''}">
@@ -765,7 +946,6 @@ async function loadOldProductData() {
 
 // 儲存匯入後編輯的新商品
 async function saveImportedProduct() {
-  // 獲取表單數據
   const productCode = document.getElementById('p_code').value.trim();
   const productName = document.getElementById('p_name').value.trim();
   const unit = document.getElementById('p_unit').value.trim();
@@ -806,12 +986,11 @@ async function saveImportedProduct() {
   }
 }
 
+//編輯報價單
 async function editQuote(id){
   const {data:q} = await sb.from("quotations").select("*").eq("id",id).single();
   const {data:c}=await sb.from("customers").select("id,name");
   const {data:s}=await sb.from("suppliers").select("id,name");
-  
-  // ✅ 修復排序語法，移除錯誤參數
   const {data:items}=await sb.from("quotation_items")
     .select("*")
     .eq("quotation_id",id)
@@ -882,7 +1061,7 @@ async function editQuote(id){
   initDragSort();
 }
 
-//修改點
+//複製報價單內容到剪簿
 async function copyQuoteToClipboard(quoteId) {
   try {
     const {data:q} = await sb.from("quotations").select("*").eq("id",quoteId).single();
@@ -901,6 +1080,7 @@ async function copyQuoteToClipboard(quoteId) {
   }
 }
 
+//更新報價單
 async function updateQuote(id){
   await sb.from("quotations").update({
     quote_date:q_date.value,
@@ -914,7 +1094,7 @@ async function updateQuote(id){
 }
 
 let items=[];
-//起點1
+
 // ========== 新增報價單 - 商品搜尋增強（支援代號+名稱） ==========
 async function openQuote(){
   items=[]; 
@@ -987,6 +1167,7 @@ async function openQuote(){
             <th class="text-end">成本</th>
             <th class="text-end">利潤</th>
             <th class="text-center">操作</th>
+
           </tr>
         </thead>
         <tbody id="newQuoteItemsBody"></tbody>
@@ -1100,7 +1281,7 @@ window.addQuoteItem = function() {
   delete window.selectedProductUnit;
 };
 
-// ========== 新增：開啟獨立報價單網頁 ==========
+// ========== 開啟獨立報價單網頁 ==========
 function openIndependentQuotePage() {
   // 開啟新視窗打開 nq.html，_blank 表示新視窗
   window.open('nq.html', '_blank');
@@ -1118,7 +1299,7 @@ function fillProduct() {
   document.getElementById('i_unit').value = opt.dataset.unit || '';
 }
 
-// 修正：加入商品 - 正確計算小計/利潤
+// 加入商品 - 正確計算小計/利潤
 function addItem() {
   const name = document.getElementById('i_name').value;
   const qty = parseInt(document.getElementById('i_qty').value) || 1;
@@ -1188,7 +1369,7 @@ function renderItems() {
   document.getElementById('totalProfit').textContent = money(totalProfit);
 }
 
-// 修正：刪除商品 - 重新計算總值
+// 刪除商品 - 重新計算總值
 function removeItem(idx) {
   items.splice(idx, 1);
   renderItems();
@@ -1304,7 +1485,6 @@ async function saveItemOrder(quoteId) {
   }
 }
 
-// 修正：儲存報價單 - 正確儲存成本/利潤
 // 儲存報價單
 async function saveQuote() {
   const quoteNo = document.getElementById('q_no').value;
@@ -1354,7 +1534,6 @@ async function saveQuote() {
     alert("儲存失敗，請稍後再試！");
   }
 }
-
 
 // ========== 匯入舊報價單功能 (支援編輯後儲存+支援多條件查詢+編輯後儲存) ==========
 async function openImportOldQuote() {
@@ -1544,7 +1723,6 @@ async function searchOldQuotes() {
   document.getElementById('oldQuoteList').innerHTML = listHtml;
 }
 
-// 選擇要匯入的舊報價單
 // 選擇要匯入的舊報價單
 async function selectOldQuote(quoteId) {
   // 獲取報價單主檔資訊
@@ -1749,7 +1927,6 @@ async function quoteNo() {
   return `${prefix}${count.toString().padStart(3, '0')}`;
 }
 
-
 // 計算總金額/成本/利潤
 function calculateTotal() {
   const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -1773,17 +1950,17 @@ window.removeQuoteItem = function(index) {
   calculateTotal();
 };
 
-// 金額格式化函數 (原程式已有，若無需新增)
+// 金額格式化函數 
 function money(n) {
   return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD' }).format(n || 0);
 }
 
-// 獲取使用者ID (原程式已有，若無需新增)
+// 獲取使用者ID 
 function uid() {
   return user?.id || 'anonymous';
 }
 
-// 彈窗顯示函數 (原程式已有，若無需新增)
+// 彈窗顯示函數 
 function show(html, lg = false) {
   document.getElementById('mdBody').innerHTML = html;
   document.getElementById('mdSize').className = lg ? 'modal-dialog modal-xl' : 'modal-dialog';
@@ -1802,8 +1979,6 @@ function show(html, isLarge = false) {
   document.getElementById('mdBody').innerHTML = html;
   modal.show();
 }
-
-
 
 // 載入選擇的舊報價單詳細資訊
 async function loadOldQuoteDetails() {
@@ -2077,6 +2252,8 @@ function showRegister() {
     <button class="btn w-100 btn-sm" onclick="location.reload()">返回</button>
   `;
 }
+
+//註冊帳號
 async function register() {
   const e = rEmail.value.trim(); const p = rPassword.value.trim();
   if (!e || !p) { alert("請輸入信箱與密碼"); return; }
@@ -2085,19 +2262,19 @@ async function register() {
   if (error) alert("註冊失敗："+error.message); else alert("註冊成功！請登入");
 }
 
-// 輔助函數：彈窗顯示（保留原功能）
+// 輔助函數：彈窗顯示
 function show(html, lg) {
   document.getElementById('mdBody').innerHTML = html;
   document.getElementById('mdSize').className = lg ? 'modal-dialog modal-xl' : 'modal-dialog';
   modal.show();
 }
 
-// 輔助函數：關閉彈窗（保留原功能）
+// 輔助函數：關閉彈窗
 function closeModal() {
   modal.hide();
 }
 
-// 輔助函數：金額格式化（保留原功能）
+// 輔助函數：金額格式化
 function money(n) {
   return new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
 }
@@ -2157,7 +2334,7 @@ async function quoteNo() {
 async function loadCustomers(){
   const kw=document.querySelector("#cust input").value;
   const {data}=await sb.from("customers").select("*").ilike("name",`%${kw}%`).order("created_at",{ascending:false});
-  let h=""; if(data) data.forEach(i=>h+=`<tr><td>${i.name}</td><td>${i.contact_person||"-"}</td><td>${i.phone||"-"}</td><td><button class='btn btn-sm btn-warning' onclick='editCustomer("${i.id}")'>編</button><button class='btn btn-sm btn-danger' onclick='delCustomer("${i.id}")'>刪</button></td></tr>`);
+  let h=""; if(data) data.forEach(i=>h+=`<tr><td>${i.name}</td><td>${i.contact_person||"-"}</td><td>${i.phone||"-"}</td><td><button class='btn btn-sm btn-warning' onclick='editCustomer("${i.id}")'>編輯</button><button class='btn btn-sm btn-danger' onclick='delCustomer("${i.id}")'>刪除</button></td></tr>`);
   custList.innerHTML=h;
 }
 
@@ -2167,11 +2344,12 @@ function editCustomer(id) {
 
 function openCustomer(id){
   show(`<div class="modal-header"><h5>${id?"編輯":"新增"}客戶</h5><button class="btn-close" onclick="closeModal()"></button></div>
-  <div class="modal-body"><input class="form-control mb-2" id="c_name" placeholder="名稱"><input class="form-control mb-2" id="c_contact" placeholder="聯絡人"><input class="form-control mb-2" id="c_phone" placeholder="電話"><textarea class="form-control" id="c_addr" placeholder="地址"></textarea></div>
+  <div class="modal-body"><input class="form-control mb-2" id="c_name" placeholder="客戶名稱"><input class="form-control mb-2" id="c_contact" placeholder="客戶聯絡人"><input class="form-control mb-2" id="c_phone" placeholder="客戶電話"><textarea class="form-control" id="c_addr" placeholder="客戶地址"></textarea></div>
   <div class="modal-footer"><button class="btn btn-primary" onclick="${id?`updateCustomer('${id}')`:'saveCustomer()'}">儲存</button></div>`);
   if(id)sb.from("customers").select("*").eq("id",id).single().then(r=>{c_name.value=r.data.name; c_contact.value=r.data.contact_person||""; c_phone.value=r.data.phone||""; c_addr.value=r.data.address||"";});
 }
 
+//儲存客戶資料
 async function saveCustomer(){
   await sb.from("customers").insert([{
     name:c_name.value,
@@ -2184,6 +2362,7 @@ async function saveCustomer(){
   loadCustomers();
 }
 
+//更新客戶資料
 async function updateCustomer(id){
   await sb.from("customers").update({
     name:c_name.value,
@@ -2195,6 +2374,7 @@ async function updateCustomer(id){
   loadCustomers();
 }
 
+//刪除客戶資料
 async function delCustomer(id){
   if(confirm("確定刪除?")){
     await sb.from("customers").delete().eq("id",id);
@@ -2244,7 +2424,7 @@ function toggleSelectAllQuotes() {
   }
 }
 
-// 查看報價單
+// 檢視報價單
 async function viewQuote(id) {
   const {data:q} = await sb.from("quotations").select("*").eq("id",id).single();
   const {data:items}=await sb.from("quotation_items").select("*").eq("quotation_id",id);
@@ -2355,6 +2535,8 @@ function openProductHistory(){
     </div>
   </div>`,true);
 }
+
+//載入歷史報價單
 async function loadProductHistory(){
   const productKeyword = document.getElementById("searchProduct").value.trim().toLowerCase();
   const dateKeyword = document.getElementById("searchDate").value;
@@ -2428,6 +2610,7 @@ function clearSearchFields() {
   document.getElementById("historyBody").innerHTML = "";
 }
 
+//搜尋商品
 async function searchProductHistory() {
   const prodName = document.getElementById('historyProdName').value.trim().toLowerCase();
   if (!prodName) {
@@ -2473,7 +2656,7 @@ function loadAll() {
   loadQuotes();
 }
 
-// 刪除廠商函數（保留）
+// 刪除廠商函數
 async function delSupplier(id){
   if(confirm("確定刪除?")){
     await sb.from("suppliers").delete().eq("id",id);
