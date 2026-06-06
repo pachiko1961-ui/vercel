@@ -92,6 +92,7 @@
           <button class="btn btn-sm btn-dark me-2" onclick="importOldProduct()">匯入轉新增商品</button>
           <button class="btn btn-sm btn-secondary me-2" onclick="openProductSearchModal()">搜尋及編輯商品</button>
           <button class="btn btn-sm btn-primary" onclick="openProduct()">新增商品</button>
+          <button class="btn btn-sm btn-danger" onclick="openIndependentIO()">資料備份</button>
         </div>
       </div>
       <div class="d-flex gap-2 mb-2">
@@ -1285,6 +1286,12 @@ window.addQuoteItem = function() {
 function openIndependentQuotePage() {
   // 開啟新視窗打開 nq.html，_blank 表示新視窗
   window.open('nq.html', '_blank');
+}
+
+// ========== 開啟資料備份網頁 ==========
+function openIndependentIO() {
+  // 開啟新視窗打開 io.html，_blank 表示新視窗
+  window.open('io.html', '_blank');
 }
 
 // 修正：填充商品資訊 - 確保成本正確帶入
