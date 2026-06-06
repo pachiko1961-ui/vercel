@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><<銀河資訊>>報價管理系統 - 資料匯入匯出</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .modal-lg{max-width:900px;}
+    .progress { height: 25px; margin: 10px 0; }
+    .progress-bar { transition: width 0.3s ease; }
+    .import-export-panel { margin: 20px 0; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; }
+    .btn-group-custom { display: flex; gap: 10px; margin-bottom: 15px; }
+    .table-responsive { max-height: 400px; overflow-y: auto; margin-top: 15px; }
+    .status-text { font-weight: 500; margin-left: 10px; }
+  </style>
+</head>
+<body class="container py-4">
+  <h3 class="mb-4">📤 <<銀河資訊>>資料匯入/匯出管理</h3>
+
+  <!-- 登入面板 -->
+  <div id="loginPanel" class="d-flex vh-80 align-items-center justify-content-center">
+    <div class="card p-4 shadow-sm" style="width:400px">
+      <h3 class="text-center mb-3">🔐 系統登入</h3>
+      <div id="loginForm">
+        <input class="form-control mb-2" id="email" placeholder="電子信箱" type="email">
+        <input class="form-control mb-2" id="password" placeholder="密碼" type="password">
+        <button class="btn btn-primary w-100 mb-2" onclick="login()">登入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主要功能面板 -->
+  <div id="mainPanel" class="d-none">
+    <div class="d-flex justify-content-between mb-4">
+      <h4>資料管理中心</h4>
+      <div>
+        <span id="userEmail" class="me-2"></span>
+        <button class="btn btn-sm btn-danger" onclick="logout()">登出</button>
+      </div>
+    </div>
+
+    <!-- 匯入匯出面板 -->
+    <div class="import-export-panel">
+      <h5 class="mb-3">📊 資料匯出</h5>
+      <div class="btn-group-custom">
+        <button class="btn btn-success" onclick="exportAllData()">匯出全部資料</button>
+        <button class="btn btn-info" onclick="exportSelectedTable()">匯出指定表格</button>
+      </div>
+      
+      <!-- 匯出進度條 -->
+      <div id="exportProgressContainer" class="d-none">
+        <div class="d-flex align-items-center">
+          <span>匯出進度：</span>
+          <span id="exportStatus" class="status-text">準備中...</span>
+        </div>
+        <div class="progress">
+          <div id="exportProgressBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <h5 class="mb-3">📥 資料匯入</h5>
+      <div class="btn-group-custom">
+        <input type="file" id="importFile" accept=".json" class="form-control">
+        <button class="btn btn-warning" onclick="importData()">匯入資料</button>
+        <button class="btn btn-secondary" onclick="clearImportData()">清空選擇</button>
+      </div>
+      <div class="form-check mt-2">
+        <input type="checkbox" class="form-check-input" id="overwriteData">
+        <label class="form-check-label" for="overwriteData">覆蓋現有資料（請謹慎操作）</label>
+      </div>
+      
+      <!-- 匯入進度條 -->
+      <div id="importProgressContainer" class="d-none">
+        <div class="d-flex align-items-center">
+          <span>匯入進度：</span>
+          <span id="importStatus" class="status-text">準備中...</span>
+        </div>
+        <div class="progress">
+          <div id="importProgressBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表格選擇面板 -->
+    <div id="tableSelectModal" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">選擇要匯出的表格</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tableCustomers" checked>
+              <label class="form-check-label" for="tableCustomers">客戶表 (customers)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tableSuppliers" checked>
+              <label class="form-check-label" for="tableSuppliers">廠商表 (suppliers)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tableProducts" checked>
+              <label class="form-check-label" for="tableProducts">商品表 (products)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tableQuotations" checked>
+              <label class="form-check-label" for="tableQuotations">報價單表 (quotations)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tableQuotationItems" checked>
+              <label class="form-check-label" for="tableQuotationItems">報價單明細表 (quotation_items)</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="confirmExportSelected()">確認匯出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 資料預覽面板 -->
+    <div class="mt-4">
+      <h5>📋 當前資料預覽</h5>
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#previewCustomers">客戶</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#previewSuppliers">廠商</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#previewProducts">商品</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#previewQuotations">報價單</a></li>
+      </ul>
+      <div class="tab-content">
+        <div id="previewCustomers" class="tab-pane fade show active">
+          <div class="table-responsive"><table class="table table-bordered table-sm" id="previewCustomersTable"></table></div>
+        </div>
+        <div id="previewSuppliers" class="tab-pane fade">
+          <div class="table-responsive"><table class="table table-bordered table-sm" id="previewSuppliersTable"></table></div>
+        </div>
+        <div id="previewProducts" class="tab-pane fade">
+          <div class="table-responsive"><table class="table table-bordered table-sm" id="previewProductsTable"></table></div>
+        </div>
+        <div id="previewQuotations" class="tab-pane fade">
+          <div class="table-responsive"><table class="table table-bordered table-sm" id="previewQuotationsTable"></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Supabase 配置
+    const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // 全域變數
+    let user = null;
+    const tableSelectModal = new bootstrap.Modal(document.getElementById('tableSelectModal'));
+    const TABLES = [
+      { id: 'customers', name: '客戶表' },
+      { id: 'suppliers', name: '廠商表' },
+      { id: 'products', name: '商品表' },
+      { id: 'quotations', name: '報價單表' },
+      { id: 'quotation_items', name: '報價單明細表' }
+    ];
+
+    // 頁面加載時檢查授權
+    window.onload = checkAuth;
+
+    // 授權檢查
+    async function checkAuth() {
+      const { data } = await sb.auth.getUser();
+      if (data.user) {
+        user = data.user;
+        document.getElementById('loginPanel').classList.add('d-none');
+        document.getElementById('mainPanel').classList.remove('d-none');
+        document.getElementById('userEmail').textContent = user.email;
+        loadPreviewData();
+      }
+    }
+
+    // 登入
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        checkAuth();
+      } catch (err) {
+        alert('登入失敗：' + err.message);
+      }
+    }
+
+    // 登出
+    async function logout() {
+      await sb.auth.signOut();
+      window.location.reload();
+    }
+
+    // 更新進度條
+    function updateProgress(containerId, barId, statusId, progress, statusText) {
+      const container = document.getElementById(containerId);
+      const bar = document.getElementById(barId);
+      const status = document.getElementById(statusId);
+      
+      container.classList.remove('d-none');
+      bar.style.width = `${progress}%`;
+      bar.setAttribute('aria-valuenow', progress);
+      status.textContent = statusText;
+    }
+
+    // 匯出全部資料
+    async function exportAllData() {
+      updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 0, '開始匯出全部資料...');
+      
+      try {
+        const exportData = {};
+        const totalTables = TABLES.length;
+        
+        for (let i = 0; i < TABLES.length; i++) {
+          const table = TABLES[i];
+          const progress = Math.round(((i + 1) / totalTables) * 80);
+          updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', progress, `正在匯出 ${table.name}...`);
+          
+          const { data, error } = await sb.from(table.id).select('*');
+          if (error) throw new Error(`匯出 ${table.name} 失敗：${error.message}`);
+          
+          exportData[table.id] = data;
+          await sleep(300);
+        }
+
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 90, '生成匯出檔案...');
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `銀河資訊_匯出_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 100, '匯出完成！');
+        setTimeout(() => {
+          document.getElementById('exportProgressContainer').classList.add('d-none');
+        }, 2000);
+        
+      } catch (err) {
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 0, `匯出失敗：${err.message}`);
+        setTimeout(() => {
+          document.getElementById('exportProgressContainer').classList.add('d-none');
+        }, 3000);
+      }
+    }
+
+    // 選擇要匯出的表格
+    function exportSelectedTable() {
+      tableSelectModal.show();
+    }
+
+    // 確認匯出選擇的表格
+    async function confirmExportSelected() {
+      tableSelectModal.hide();
+      updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 0, '開始匯出選擇的表格...');
+      
+      try {
+        const exportData = {};
+        const selectedTables = TABLES.filter(table => document.getElementById(`table${table.id.charAt(0).toUpperCase() + table.id.slice(1)}`).checked);
+        const totalTables = selectedTables.length;
+        
+        if (totalTables === 0) {
+          alert('請至少選擇一個表格！');
+          return;
+        }
+
+        for (let i = 0; i < selectedTables.length; i++) {
+          const table = selectedTables[i];
+          const progress = Math.round(((i + 1) / totalTables) * 80);
+          updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', progress, `正在匯出 ${table.name}...`);
+          
+          const { data, error } = await sb.from(table.id).select('*');
+          if (error) throw new Error(`匯出 ${table.name} 失敗：${error.message}`);
+          
+          exportData[table.id] = data;
+          await sleep(300);
+        }
+
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 90, '生成匯出檔案...');
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `銀河資訊_自定義匯出_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 100, '匯出完成！');
+        setTimeout(() => {
+          document.getElementById('exportProgressContainer').classList.add('d-none');
+        }, 2000);
+        
+      } catch (err) {
+        updateProgress('exportProgressContainer', 'exportProgressBar', 'exportStatus', 0, `匯出失敗：${err.message}`);
+        setTimeout(() => {
+          document.getElementById('exportProgressContainer').classList.add('d-none');
+        }, 3000);
+      }
+    }
+
+    // 匯入資料（最終修復版：支援UUID + 跳過重複 + 安全清空）
+    async function importData() {
+      const fileInput = document.getElementById('importFile');
+      const overwrite = document.getElementById('overwriteData').checked;
+      
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('請選擇要匯入的 JSON 檔案！');
+        return;
+      }
+
+      if (overwrite && !confirm('確認要覆蓋現有資料？此操作不可復原！')) {
+        return;
+      }
+
+      updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', 0, '讀取匯入檔案...');
+      
+      try {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+          try {
+            const importData = JSON.parse(e.target.result);
+            const tablesToImport = Object.keys(importData).filter(table => TABLES.some(t => t.id === table));
+            const totalTables = tablesToImport.length;
+
+            if (totalTables === 0) {
+              throw new Error('檔案中沒有可匯入的表格資料');
+            }
+
+            for (let i = 0; i < tablesToImport.length; i++) {
+              const table = tablesToImport[i];
+              const tableName = TABLES.find(t => t.id === table)?.name || table;
+              const progress = Math.round(((i + 1) / totalTables) * 80);
+              updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', progress, `正在匯入 ${tableName}...`);
+              
+              const data = importData[table];
+              
+              // 修復：UUID 安全清空表格
+              if (overwrite) {
+                const { error: deleteError } = await sb.from(table).delete().gt('id', '00000000-0000-0000-0000-000000000000');
+                if (deleteError) throw new Error(`清空 ${tableName} 失敗：${deleteError.message}`);
+              }
+
+              // 分批插入 + 跳過重複ID
+              const batchSize = 50;
+              for (let j = 0; j < data.length; j += batchSize) {
+                const batch = data.slice(j, j + batchSize);
+                
+                if (overwrite) {
+                  const { error } = await sb.from(table).insert(batch);
+                  if (error) throw error;
+                } else {
+                  for (const row of batch) {
+                    try {
+                      await sb.from(table).insert([row]);
+                    } catch (rowErr) {
+                      console.log(`跳過重複ID：${row.id} (${tableName})`);
+                      continue;
+                    }
+                  }
+                }
+              }
+              await sleep(300);
+            }
+
+            updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', 90, '更新資料預覽...');
+            await loadPreviewData();
+
+            updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', 100, '匯入完成！');
+            setTimeout(() => {
+              document.getElementById('importProgressContainer').classList.add('d-none');
+            }, 2000);
+            
+          } catch (err) {
+            updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', 0, `匯入失敗：${err.message}`);
+            setTimeout(() => {
+              document.getElementById('importProgressContainer').classList.add('d-none');
+            }, 3000);
+          }
+        };
+        
+        reader.readAsText(file);
+        
+      } catch (err) {
+        updateProgress('importProgressContainer', 'importProgressBar', 'importStatus', 0, `讀取檔案失敗：${err.message}`);
+        setTimeout(() => {
+          document.getElementById('importProgressContainer').classList.add('d-none');
+        }, 3000);
+      }
+    }
+
+    // 清空匯入檔案選擇
+    function clearImportData() {
+      document.getElementById('importFile').value = '';
+      document.getElementById('overwriteData').checked = false;
+    }
+
+    // 加載資料預覽
+    async function loadPreviewData() {
+      loadTablePreview('customers', 'previewCustomersTable', [
+        { key: 'id', label: 'ID' },{ key: 'name', label: '客戶名稱' },{ key: 'contact_person', label: '聯絡人' },{ key: 'phone', label: '電話' },{ key: 'address', label: '地址' }
+      ]);
+      loadTablePreview('suppliers', 'previewSuppliersTable', [
+        { key: 'id', label: 'ID' },{ key: 'name', label: '廠商名稱' },{ key: 'contact_person', label: '聯絡人' },{ key: 'phone', label: '電話' },{ key: 'address', label: '地址' },{ key: 'url', label: '網址' }
+      ]);
+      loadTablePreview('products', 'previewProductsTable', [
+        { key: 'id', label: 'ID' },{ key: 'product_code', label: '商品代號' },{ key: 'product_name', label: '商品名稱' },{ key: 'unit', label: '單位' },{ key: 'sale_price', label: '售價' },{ key: 'cost', label: '成本' },{ key: 'update_date', label: '更新日期' }
+      ]);
+      loadTablePreview('quotations', 'previewQuotationsTable', [
+        { key: 'id', label: 'ID' },{ key: 'quote_no', label: '報價單號' },{ key: 'quote_date', label: '報價日期' },{ key: 'customer_id', label: '客戶ID' },{ key: 'status', label: '狀態' },{ key: 'created_at', label: '建立時間' }
+      ]);
+    }
+
+    // 加載單個表格預覽
+    async function loadTablePreview(tableName, tableId, columns) {
+      try {
+        const { data, error } = await sb.from(tableName).select('*').limit(50);
+        if (error) throw error;
+
+        const table = document.getElementById(tableId);
+        let thead = '<thead><tr>';
+        columns.forEach(col => thead += `<th>${col.label}</th>`);
+        thead += '</tr></thead>';
+
+        let tbody = '<tbody>';
+        if (data.length === 0) {
+          tbody += `<tr><td colspan="${columns.length}" class="text-center">無資料</td></tr>`;
+        } else {
+          data.forEach(row => {
+            tbody += '<tr>';
+            columns.forEach(col => {
+              const value = row[col.key] || '-';
+              tbody += `<td>${value}</td>`;
+            });
+            tbody += '</tr>';
+          });
+        }
+        tbody += '</tbody>';
+        table.innerHTML = thead + tbody;
+      } catch (err) {
+        console.error(`加載 ${tableName} 預覽失敗：`, err);
+      }
+    }
+
+    // 輔助函數
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function money(n) { if (!n) return '0'; return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    function uid() { return user?.id || ''; }
+  </script>
+</body>
+</html>
