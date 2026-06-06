@@ -20,6 +20,14 @@
     }
     .table-responsive { max-height: 400px; overflow-y: auto; margin-top: 15px; }
     .status-text { font-weight: 500; margin-left: 10px; }
+    /* 紅底白字樣式 - 覆蓋資料警告 */
+    .overwrite-warning {
+    background-color: #dc3545; /* 紅色背景（Bootstrap 危險色） */
+    color: white !important;    /* 白色文字 */
+    padding: 4px 8px;           /* 內邊距，讓文字不貼邊 */
+    border-radius: 4px;         /* 圓角，視覺更友好 */
+    font-weight: 600;           /* 加粗文字，強調警告 */
+    }
   </style>
 </head>
 <body class="container py-4">
@@ -52,8 +60,8 @@
     <div class="import-export-panel">
       <h5 class="mb-3">📊 資料匯出</h5>
       <div class="btn-group-custom">
-        <button class="btn btn-success" onclick="exportAllData()">匯出全部資料</button>
-        <button class="btn btn-info" onclick="exportSelectedTable()">匯出指定表格</button>
+        <button class="btn btn-success" onclick="exportAllData()">匯出-全部資料</button>
+        <button class="btn btn-info" onclick="exportSelectedTable()">匯出-指定資料</button>
       </div>
       
       <!-- 匯出進度條 -->
@@ -72,13 +80,15 @@
       <h5 class="mb-3">📥 資料匯入</h5>
       <div class="btn-group-custom">
         <input type="file" id="importFile" accept=".json" class="form-control">
-        <button class="btn btn-warning" onclick="importData()">匯入資料</button>
-        <button class="btn btn-secondary" onclick="clearImportData()">清空選擇</button>
+        
       </div>
       <div class="form-check mt-2">
-        <input type="checkbox" class="form-check-input" id="overwriteData">
-        <label class="form-check-label" for="overwriteData">覆蓋現有資料（請謹慎操作）</label>
-      </div>
+  <input type="checkbox" class="form-check-input" id="overwriteData">
+  <!-- 加入 overwrite-warning 類 -->
+  <label class="form-check-label overwrite-warning" for="overwriteData"><<將覆蓋現有資料-請謹慎操作>></label>
+<button class="btn btn-warning" onclick="importData()">匯入資料</button>
+        <button class="btn btn-secondary" onclick="clearImportData()">清空選擇</button>
+</div>
       
       <!-- 匯入進度條 -->
       <div id="importProgressContainer" class="d-none">
