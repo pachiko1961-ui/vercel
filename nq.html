@@ -49,7 +49,8 @@
             <input type="number" class="form-control form-control-sm" id="qty" value="1" min="1" placeholder="數量">
           </div>
           <div class="col-md-2">
-            <input type="number" class="form-control form-control-sm" id="price" placeholder="單價" readonly>
+            <!-- 移除 readonly 屬性，讓單價可編輯 -->
+            <input type="number" class="form-control form-control-sm" id="price" placeholder="單價" min="0" step="1">
           </div>
           <div class="col-md-2">
             <button class="btn btn-primary btn-sm w-100" onclick="addItem()">加入商品</button>
@@ -187,6 +188,26 @@ function addItem() {
   document.getElementById("price").value = "";
 }
 
+// 編輯單價
+function editPrice(index) {
+  const newPrice = prompt("請輸入新的單價：", items[index].unit_price);
+  if (newPrice === null) return; // 取消編輯
+  const price = parseFloat(newPrice) || 0;
+  if (price <= 0) {
+    alert("單價必須大於0");
+    return;
+  }
+
+  // 更新該商品的單價、小計、利潤
+  items[index].unit_price = Math.round(price);
+  items[index].subtotal = Math.round(items[index].quantity * price);
+  items[index].costTotal = Math.round(items[index].quantity * items[index].cost);
+  items[index].profit = Math.round(items[index].subtotal - items[index].costTotal);
+  
+  // 重新渲染表格和總計
+  renderItems();
+}
+
 // 排序：上移
 function moveUp(index) {
   if (index === 0) return;
@@ -211,7 +232,12 @@ function renderItems() {
     <tr>
       <td>${it.product_name}</td>
       <td class="text-center">${it.quantity}</td>
-      <td class="text-end">${formatMoney(it.unit_price)}</td>
+      <!-- 將單價改為可點擊編輯的元素 -->
+      <td class="text-end">
+        <span onclick="editPrice(${i})" style="cursor: pointer; text-decoration: underline; color: #0d6efd;">
+          ${formatMoney(it.unit_price)}
+        </span>
+      </td>
       <td class="text-end">${formatMoney(it.subtotal)}</td>
       <td class="text-end">${formatMoney(it.costTotal)}</td>
       <td class="text-end">${formatMoney(it.profit)}</td>
