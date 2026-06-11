@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>報價單編輯另存工具</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .modal-lg{max-width:900px;}
+    .product-row {
+      transition: all 0.2s ease;
+    }
+    .product-row:hover {
+      background-color: #f8f9fa;
+    }
+    .move-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .note-cell {
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="text-center mb-4">📋 報價單編輯另存工具</h2>
+    
+    <!-- 搜尋區域 -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">🔍 舊報價單搜尋</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">報價單號</label>
+            <input type="text" class="form-control" id="searchQuoteNo" placeholder="輸入報價單號">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">客戶名稱</label>
+            <input type="text" class="form-control" id="searchCustomer" placeholder="輸入客戶名稱">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">報價日期</label>
+            <input type="date" class="form-control" id="searchQuoteDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">狀態</label>
+            <select class="form-select" id="searchStatus">
+              <option value="">全部狀態</option>
+              <option value="報價中">報價中</option>
+              <option value="已成交">已成交</option>
+              <option value="模版">模版</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-primary" onclick="searchQuotes()">執行搜尋</button>
+          <button class="btn btn-outline-secondary" onclick="clearSearch()">清空條件</button>
+        </div>
+        
+        <div class="mt-4">
+          <h6>搜尋結果</h6>
+          <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-bordered table-sm">
+              <thead class="table-light">
+                <tr>
+                  <th>報價單號</th>
+                  <th>報價日期</th>
+                  <th>客戶</th>
+                  <th>狀態</th>
+                  <th>備註</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="quoteSearchResult"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯區域 -->
+    <div id="editPanel" class="card mb-4 shadow-sm d-none">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">✏️ 報價單編輯</h5>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <label class="form-label">原報價單號</label>
+            <input type="text" class="form-control" id="oldQuoteNo" readonly>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">新報價單號</label>
+            <input type="text" class="form-control" id="newQuoteNo" readonly>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">報價日期</label>
+            <input type="date" class="form-control" id="quoteDate">
+          </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="form-label">客戶名稱</label>
+            <select class="form-select" id="customerName">
+              <option value="">請選擇客戶</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">狀態</label>
+            <select class="form-select" id="quoteStatus">
+              <option value="報價中">報價中</option>
+              <option value="已成交">已成交</option>
+              <option value="模版">模版</option>
+            </select>
+          </div>
+        </div>
+
+        <h6 class="mb-3">商品明細</h6>
+        <div class="table-responsive mb-4" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-bordered table-sm">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 60px;">排序</th>
+                <th>商品名稱</th>
+                <th style="width: 80px;">單位</th>
+                <th style="width: 80px;">數量</th>
+                <th style="width: 100px;">單價</th>
+                <th style="width: 100px;">成本</th>
+                <th style="width: 100px;">小計(Subtotal)</th>
+                <th style="width: 120px;">移動順序</th>
+              </tr>
+            </thead>
+            <tbody id="productItems"></tbody>
+          </table>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" onclick="resetEdit()">重置</button>
+          <button class="btn btn-success" onclick="saveAsNewQuote()">另存為新報價單</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加載提示彈窗 -->
+  <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4">
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <p class="mb-0">處理中，請稍候...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <script>
+    const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentQuoteId = null;
+    let currentQuoteItems = [];
+    let customerList = [];
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('quoteDate').value = new Date().toISOString().split('T')[0];
+      loadCustomerList();
+    });
+
+    async function loadCustomerList() {
+      try {
+        const { data: customers, error } = await sb.from("customers").select("id,name").order("name");
+        if (error) throw error;
+        customerList = customers;
+        const customerSelect = document.getElementById('customerName');
+        customerSelect.innerHTML = '<option value="">請選擇客戶</option>';
+        customers.forEach(customer => {
+          const option = document.createElement('option');
+          option.value = customer.id;
+          option.textContent = customer.name;
+          customerSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('載入客戶列表失敗', error);
+        alert('載入客戶列表失敗：' + error.message);
+      }
+    }
+
+    function formatNumber(num) {
+      return Math.round(Number(num)).toLocaleString('zh-TW');
+    }
+
+    function calcRowSubtotal(item) {
+      return Math.round((item.quantity || 0) * (item.unit_price || 0));
+    }
+
+    function calculateTotalAmount() {
+      return currentQuoteItems.reduce((total, item) => {
+        return total + calcRowSubtotal(item);
+      }, 0);
+    }
+
+    // 頁面排序顯示：直接使用陣列索引，不依賴 item.display_order
+    function renderProductItems() {
+      let html = '';
+      if (currentQuoteItems.length === 0) {
+        html = '<tr><td colspan="8" class="text-center">無商品數據</td></tr>';
+      } else {
+        currentQuoteItems.forEach((item, index) => {
+          const subtotal = calcRowSubtotal(item);
+          html += `
+          <tr class="product-row" data-index="${index}">
+            <td class="text-center">${index}</td>
+            <td>${item.product_name || '-'}</td>
+            <td class="text-center">${item.unit || '-'}</td>
+            <td>
+              <input type="number" class="form-control form-control-sm" value="${item.quantity || 1}" 
+                     onchange="updateItemValue(${index}, 'quantity', this.value)" min="1" step="1">
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm text-end" value="${item.unit_price || 0}" 
+                     onchange="updateItemValue(${index}, 'unit_price', this.value)" min="0" step="1">
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm text-end" value="${item.cost || 0}" 
+                     onchange="updateItemValue(${index}, 'cost', this.value)" min="0" step="1">
+            </td>
+            <td class="text-end fw-bold">${formatNumber(subtotal)}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-secondary move-btn me-1" onclick="moveItem(${index}, 'up')" ${index === 0 ? 'disabled' : ''}>↑</button>
+              <button class="btn btn-sm btn-secondary move-btn" onclick="moveItem(${index}, 'down')" ${index === currentQuoteItems.length - 1 ? 'disabled' : ''}>↓</button>
+            </td>
+          </tr>`;
+        });
+      }
+      document.getElementById('productItems').innerHTML = html;
+    }
+
+    function updateItemValue(index, field, value) {
+      if (index >= 0 && index < currentQuoteItems.length) {
+        currentQuoteItems[index][field] = parseInt(value) || 0;
+        renderProductItems();
+      }
+    }
+
+    // 上下移動：只交換數組順序，不修改 item.display_order
+    function moveItem(index, direction) {
+      if (direction === 'up' && index > 0) {
+        [currentQuoteItems[index], currentQuoteItems[index - 1]] = [currentQuoteItems[index - 1], currentQuoteItems[index]];
+      } else if (direction === 'down' && index < currentQuoteItems.length - 1) {
+        [currentQuoteItems[index], currentQuoteItems[index + 1]] = [currentQuoteItems[index + 1], currentQuoteItems[index]];
+      }
+      renderProductItems();
+    }
+
+    async function generateNewQuoteNo() {
+      const now = new Date();
+      const year2 = now.getFullYear().toString().slice(2);
+      const month2 = String(now.getMonth() + 1).padStart(2, '0');
+      const day2 = String(now.getDate()).padStart(2, '0');
+      const prefix = `Q${year2}${month2}${day2}`;
+
+      try {
+        const { data, error } = await sb
+          .from('quotations')
+          .select('quote_no')
+          .like('quote_no', `${prefix}%`)
+          .order('quote_no', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+        let seq = 1;
+        if (data && data.length > 0) {
+          const lastNo = data[0].quote_no;
+          const lastSeq = parseInt(lastNo.slice(-2)) || 0;
+          seq = lastSeq + 1;
+        }
+        return prefix + String(seq).padStart(2, '0');
+      } catch (err) {
+        console.error('取得單號失敗', err);
+        return prefix + '01';
+      }
+    }
+
+    async function searchQuotes() {
+      try {
+        loadingModal.show();
+        const quoteNo = document.getElementById('searchQuoteNo').value.trim();
+        const customer = document.getElementById('searchCustomer').value.trim().toLowerCase();
+        const quoteDate = document.getElementById('searchQuoteDate').value;
+        const status = document.getElementById('searchStatus').value;
+
+        let query = sb.from("quotations").select("*");
+        if (quoteNo) query = query.ilike("quote_no", `%${quoteNo}%`);
+        if (status) query = query.eq("status", status);
+        if (quoteDate) query = query.eq("quote_date", quoteDate);
+
+        const { data: quotes, error } = await query.order("quote_date", { ascending: false });
+        if (error) throw error;
+
+        const { data: customers } = await sb.from("customers").select("id,name");
+        const customerMap = {};
+        customers.forEach(c => customerMap[c.id] = c.name);
+
+        let html = '';
+        quotes.forEach(q => {
+          const name = customerMap[q.customer_id] || '未知客戶';
+          if (customer && !name.toLowerCase().includes(customer)) return;
+          const remark = q.remark || '-';
+          html += `
+          <tr>
+            <td>${q.quote_no}</td>
+            <td>${q.quote_date || '-'}</td>
+            <td>${name}</td>
+            <td>${q.status || '報價中'}</td>
+            <td class="note-cell" title="${remark}">${remark}</td>
+            <td><button class="btn btn-sm btn-primary" onclick="loadQuote('${q.id}')">開啟編輯</button></td>
+          </tr>`;
+        });
+        if (html === '') html = '<tr><td colspan="6" class="text-center">無符合條件資料</td></tr>';
+        document.getElementById('quoteSearchResult').innerHTML = html;
+      } catch (error) {
+        console.error(error);
+        alert('搜尋失敗：' + error.message);
+      } finally {
+        loadingModal.hide();
+      }
+    }
+
+    // 載入舊報價單：原樣讀取商品，**不處理原有 display_order**
+    async function loadQuote(quoteId) {
+      try {
+        loadingModal.show();
+        currentQuoteId = quoteId;
+
+        const { data: quote, error } = await sb.from("quotations")
+          .select("*")
+          .eq("id", quoteId)
+          .single();
+        if (error) throw error;
+
+        const { data: items, error: itemsError } = await sb.from("quotation_items")
+          .select("*")
+          .eq("quotation_id", quoteId)
+          .order("display_order", { ascending: true });
+        if (itemsError) throw itemsError;
+
+        // 直接賦值，保留原始數據，不修改 display_order
+        currentQuoteItems = [...items];
+
+        document.getElementById('oldQuoteNo').value = quote.quote_no;
+        document.getElementById('quoteDate').value = quote.quote_date;
+        document.getElementById('quoteStatus').value = quote.status || '報價中';
+        document.getElementById('customerName').value = quote.customer_id || '';
+
+        const newQuoteNo = await generateNewQuoteNo();
+        document.getElementById('newQuoteNo').value = newQuoteNo;
+
+        renderProductItems();
+        document.getElementById('editPanel').classList.remove('d-none');
+        document.getElementById('editPanel').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error(error);
+        alert('載入報價單失敗：' + error.message);
+      } finally {
+        loadingModal.hide();
+      }
+    }
+
+    // 另存新單：寫入資料庫時，強制 display_order 從 0 開始遞增
+    async function saveAsNewQuote() {
+      try {
+        const newQuoteNo = document.getElementById('newQuoteNo').value.trim();
+        const selectedCustomerId = document.getElementById('customerName').value;
+        
+        if (!newQuoteNo) {
+          alert('請先產生新報價單號');
+          return;
+        }
+        if (!selectedCustomerId) {
+          alert('請選擇客戶名稱');
+          return;
+        }
+        if (currentQuoteItems.length === 0) {
+          alert('商品明細不可為空');
+          return;
+        }
+
+        loadingModal.show();
+        const quoteDate = document.getElementById('quoteDate').value;
+        const status = document.getElementById('quoteStatus').value;
+        const totalAmount = calculateTotalAmount();
+
+        // 新增報價單主表
+        const { data: newQuote, error: quoteError } = await sb.from("quotations").insert([{
+          quote_no: newQuoteNo,
+          quote_date: quoteDate,
+          customer_id: selectedCustomerId,
+          status: status,
+          total_amount: totalAmount,
+          created_at: new Date().toISOString()
+        }]).select();
+
+        if (quoteError) throw quoteError;
+        const newQuoteId = newQuote[0].id;
+
+        // 核心：組裝明細時，按陣列索引從 0 賦值 display_order
+        const itemsToInsert = currentQuoteItems.map((item, idx) => {
+          const rowSubtotal = calcRowSubtotal(item);
+          return {
+            quotation_id: newQuoteId,
+            product_name: item.product_name,
+            unit: item.unit,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            cost: item.cost,
+            display_order: idx, // 固定從 0 開始
+            subtotal: rowSubtotal,
+            created_at: new Date().toISOString()
+          };
+        });
+
+        const { error: itemsError } = await sb.from("quotation_items").insert(itemsToInsert);
+        if (itemsError) throw itemsError;
+
+        alert(`✅ 新報價單 ${newQuoteNo} 建立成功！\n整單總金額：${formatNumber(totalAmount)}`);
+        resetEdit();
+        searchQuotes();
+      } catch (error) {
+        console.error(error);
+        alert('建立新報價單失敗：' + error.message);
+      } finally {
+        loadingModal.hide();
+      }
+    }
+
+    function resetEdit() {
+      currentQuoteId = null;
+      currentQuoteItems = [];
+      document.getElementById('oldQuoteNo').value = '';
+      document.getElementById('newQuoteNo').value = '';
+      document.getElementById('customerName').value = '';
+      document.getElementById('quoteDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('quoteStatus').value = '報價中';
+      document.getElementById('productItems').innerHTML = '';
+      document.getElementById('editPanel').classList.add('d-none');
+    }
+
+    function clearSearch() {
+      document.getElementById('searchQuoteNo').value = '';
+      document.getElementById('searchCustomer').value = '';
+      document.getElementById('searchQuoteDate').value = '';
+      document.getElementById('searchStatus').value = '';
+      document.getElementById('quoteSearchResult').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
