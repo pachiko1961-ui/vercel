@@ -74,7 +74,7 @@
       <div class="d-flex justify-content-between mb-2">
         <h5 style="background-color: #4535dc; color: white; padding: 2px; border-radius: 2px;">商品管理</h5>
         <div>
-          <button class="btn btn-sm btn-info me-2" onclick="openSpecTable()">規格表</button>
+          <button class="btn btn-sm btn-info me-2" onclick="openSpecTable()">快捷按鍵表</button>
           <button class="btn btn-sm btn-dark me-2" onclick="importOldProduct()">匯入轉新增商品</button>
           <button class="btn btn-sm btn-secondary me-2" onclick="openProductSearchModal()">搜尋及編輯商品</button>
           <button class="btn btn-sm btn-primary" onclick="openProduct()">新增商品</button>
@@ -170,9 +170,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const modal = new bootstrap.Modal(document.getElementById('modal'));
 let user = null;
 
-//打開規格表網頁
+//打開快捷按鍵表網頁
 function openSpecTable() {
-  window.open('p-table.html', '_blank');
+  window.open('key.html', '_blank');
 }
 window.onload = checkAuth;
 async function checkAuth() {
@@ -236,7 +236,7 @@ async function saveSupplier(){
     phone:s_phone.value,
     address:s_addr.value,
     url: s_url.value || null,
-    user_id:uid(),
+  
   }]);
   closeModal();
   loadSuppliers();
@@ -250,7 +250,7 @@ async function updateSupplier(id){
     phone:s_phone.value,
     address:s_addr.value,
     url: s_url.value || null,
-    user_id:uid(),
+    
   }).eq("id",id);
   closeModal();
   loadSuppliers();
@@ -498,7 +498,7 @@ async function saveProduct(){
     update_supplier_id: p_update_supplier.value || null,
     product_url: p_url.value || null,
     remark:p_remark.value,
-    user_id:uid(),
+  
     
   }]);
   closeModal();
@@ -517,7 +517,7 @@ async function updateProduct(id){
     update_supplier_id: p_update_supplier.value || null,
     product_url: p_url.value || null,
     remark:p_remark.value,
-    user_id:uid(),
+  
   }).eq("id",id);
   closeModal();
   loadProducts();
@@ -977,7 +977,7 @@ async function saveImportedProduct() {
       update_supplier_id: updateSupplierId,
       product_url: productUrl,
       remark: remark,
-      user_id: uid() // 當前登入用戶ID
+     
     }]);
 
     //alert("舊商品匯入並另存為新商品成功！");
@@ -1523,7 +1523,7 @@ async function saveQuote() {
       total_amount: totalAmount,
       status: status,
       remark: remark,
-      user_id: uid()
+    
     }]).select().single();
 
    
@@ -1537,7 +1537,7 @@ async function saveQuote() {
       subtotal: item.subtotal,
       cost: item.cost,
       display_order: i,
-      user_id: uid(),
+      
     }));
 
     await sb.from("quotation_items").insert(quoteItems);
@@ -1764,7 +1764,7 @@ async function saveImportedQuote() {
       total_amount: totalAmount,
       total_cost: totalCost,
       total_profit: totalProfit,
-      user_id: uid()
+      
     }]).select();
     
     const quoteId = quoteRes[0].id;
@@ -1838,11 +1838,6 @@ window.removeQuoteItem = function(index) {
 // 金額格式化函數 
 function money(n) {
   return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD' }).format(n || 0);
-}
-
-// 獲取使用者ID 
-function uid() {
-  return user?.id || 'anonymous';
 }
 
 // 彈窗顯示函數 
@@ -2091,7 +2086,7 @@ async function saveImportedQuote() {
       total_amount: totalAmount,
       total_cost: totalCost,
       total_profit: totalProfit,
-      user_id: uid()
+      
     }]).select();
     
     const quoteId = quoteRes[0].id;
@@ -2163,11 +2158,6 @@ function closeModal() {
 function money(n) {
   return new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
 }
-// 取得當前用戶ID
-function uid() {
-  return user?.id || 'anonymous';
-}
-
 // 彈窗顯示函數
 function show(html, lg=false) {
   document.getElementById('mdBody').innerHTML = html;
@@ -2231,7 +2221,7 @@ async function saveCustomer(){
     contact_person:c_contact.value,
     phone:c_phone.value,
     address:c_addr.value,
-    user_id:uid(),
+  
     
   }]);
   closeModal();
@@ -2245,7 +2235,7 @@ async function updateCustomer(id){
     contact_person:c_contact.value,
     phone:c_phone.value,
     address:c_addr.value,
-    user_id:uid(),
+   
   }).eq("id",id);
   closeModal();
   loadCustomers();
