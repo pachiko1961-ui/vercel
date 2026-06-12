@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快捷按鍵面板</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .spec-btn {
+      width: 100%;
+      height: 100px;
+      white-space: normal;
+    }
+    /* 固定 5列 = 标准5行5列布局 */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    /* 移动端自适应 */
+    @media (max-width: 768px) {
+      .btn-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 576px) {
+      .btn-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body class="container py-4">
+  <h4 class="mb-4"><<快捷按鍵>> 
+<button class="btn btn-sm btn-outline-secondary" onclick="logout()">返回系統</button> </h4>
+  <div id="specGrid" class="btn-grid mb-4"></div>
+
+  <!-- 編輯彈窗 -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">編輯按鍵</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="currBtnNum">
+          <div class="mb-3">
+            <label>按鍵名稱</label>
+            <input class="form-control" id="btnName">
+          </div>
+          <div class="mb-3">
+            <label>跳轉鏈接</label>
+            <input class="form-control" id="btnUrl">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button class="btn btn-primary" onclick="saveBtn()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // 你的 Supabase 配置
+    const SUPABASE_URL = "https://kqxwjzabeeexqmqjsont.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_P4N84KRlgvy1n7tn7KPeVw_rNX4Igwm";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    const totalBtn = 25; // 5*5 總計25個按鍵
+    let btnData = [];
+
+    // 頁面初始化
+    window.onload = function(){
+      renderBtn();
+      fetchData();
+    };
+
+    // 渲染 5×5 按鍵
+    function renderBtn(){
+      const wrap = document.getElementById('specGrid');
+      wrap.innerHTML = "";
+      for(let i = 1; i <= totalBtn; i++){
+        let btn = document.createElement('button');
+        btn.className = "btn btn-outline-primary spec-btn";
+        btn.id = "btn-" + i;
+        btn.innerText = "按鍵 " + i;
+        btn.onclick = () => openLink(i);
+        btn.oncontextmenu = e => {
+          e.preventDefault();
+          openEdit(i);
+        };
+        wrap.appendChild(btn);
+      }
+    }
+
+    // 拉取資料庫資料
+    async function fetchData(){
+      const { data, error } = await sb
+        .from('spec_buttons')
+        .select('button_number, name, url');
+
+      if(error){
+        // 打開錯誤訊息,方便定位問題
+        console.error("請求失敗:", error);
+        alert(`數據加載失敗：${error.message}\n錯誤代碼：${error.code}`);
+        return;
+      }
+      btnData = data || [];
+      // 渲染按鍵名稱
+      btnData.forEach(item=>{
+        let el = document.getElementById("btn-" + item.button_number);
+        if(el) el.innerText = item.name;
+      });
+    }
+
+    // 左鍵打開鏈接
+    function openLink(num){
+      let item = btnData.find(d=>d.button_number === num);
+      if(item && item.url){
+        window.open(item.url, '_blank');
+      }else{
+        alert("暫無鏈接網址，請按右鍵編輯按鍵");
+      }
+    }
+
+    // 右鍵打開編輯彈窗
+    function openEdit(num){
+      document.getElementById('currBtnNum').value = num;
+      let item = btnData.find(d=>d.button_number === num) || {};
+      document.getElementById('btnName').value = item.name || "";
+      document.getElementById('btnUrl').value = item.url || "";
+      modal.show();
+    }
+
+    // 保存數據
+    async function saveBtn(){
+      let num = parseInt(document.getElementById('currBtnNum').value);
+      let name = document.getElementById('btnName').value.trim();
+      let url = document.getElementById('btnUrl').value.trim();
+
+      if(!name){
+        alert("請填寫按鍵名稱");
+        return;
+      }
+
+      const payload = { button_number: num, name, url };
+      const exist = btnData.find(d=>d.button_number === num);
+      let res;
+
+      if(exist){
+        res = await sb.from('spec_buttons').update(payload).eq('button_number', num);
+      }else{
+        res = await sb.from('spec_buttons').insert(payload);
+      }
+
+      if(res.error){
+        console.error("保存失敗：", res.error);
+        alert(`保存失敗：${res.error.message}`);
+        return;
+      }
+      modal.hide();
+      await fetchData();
+      alert("保存成功！");
+    }
+//返回系統
+    function logout() {
+      window.close();
+    }
+
+  </script>
+</body>
+</html>
