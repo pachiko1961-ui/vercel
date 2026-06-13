@@ -8,14 +8,22 @@
   <style>
     .spec-btn {
       width: 100%;
-      height: 100px;
+      /* 1. 减小按钮高度（原100px） */
+      height: 60px;
+      /* 2. 减小字体大小 */
+      font-size: 14px;
+      /* 3. 减小内边距（可选，让内容更紧凑） */
+      padding: 8px 4px;
       white-space: normal;
+      /* 可选：调整行高，让文字垂直居中更美观 */
+      line-height: 1.2;
     }
     /* 固定 5列 = 标准5行5列布局 */
     .btn-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
+      /* 可选：减小按钮之间的间距（原12px） */
+      gap: 8px;
     }
     /* 移动端自适应 */
     @media (max-width: 768px) {
@@ -160,7 +168,7 @@
       }
       modal.hide();
       await fetchData();
-      alert("保存成功！");
+      //alert("保存成功！");
     }
 //返回系統
     function logout() {
