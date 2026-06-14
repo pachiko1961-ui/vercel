@@ -32,7 +32,7 @@
         <div class="col-md-2">
           <label class="form-label small">報價狀態</label>
           <select class="form-control" id="quoteStatus">
-            <option value="已報價" selected>已報價</option>
+            <option value="報價中" selected>報價中</option>
             <option value="已完成">已完成</option>
             <option value="模版">模版</option>
           </select>
@@ -267,12 +267,12 @@ async function saveQuote() {
       customer_id, 
       total_amount: total, 
       status: quote_status,
-      remark,
-      
+      remark
     }]).select();
     if (e1) throw e1;
 
-    const details = items.map(it => ({
+    // 生成明細並加入display_order（從0開始）
+    const details = items.map((it, index) => ({
       quotation_id: h[0].id,
       product_name: it.product_name,
       quantity: it.quantity,
@@ -280,7 +280,7 @@ async function saveQuote() {
       unit_price: it.unit_price,
       cost: it.cost,
       subtotal: it.subtotal,
-      
+      display_order: index  // 新增display_order欄位，從0開始排序
     }));
 
     const { error: e2 } = await sb.from("quotation_items").insert(details);
@@ -290,7 +290,7 @@ async function saveQuote() {
     items = [];
     renderItems();
     document.getElementById("remark").value = "";
-    document.getElementById("quoteStatus").value = "已報價";
+    document.getElementById("quoteStatus").value = "報價中";
     await genQuoteNo();
 
   } catch (e) {
@@ -300,9 +300,9 @@ async function saveQuote() {
 }
 
 //返回系統
-    function logout() {
-      window.close();
-    }
+function logout() {
+  window.close();
+}
 
 </script>
 </body>
