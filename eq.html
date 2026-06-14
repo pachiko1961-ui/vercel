@@ -462,11 +462,10 @@ function formatDate(s) {
   return date.toISOString().split('T')[0]; // 提取 YYYY-MM-DD 部分
 }
 
-// 登出
-async function logout() {
-  await sb.auth.signOut();
-  window.location.reload();
-}
+//返回系統
+    function logout() {
+      window.close();
+    }
 
 </script>
 </body>
