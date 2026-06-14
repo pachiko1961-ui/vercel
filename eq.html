@@ -277,6 +277,14 @@ async function editQuote(quoteId) {
     .order("display_order", { ascending: true });
 
   quoteItems = items || [];
+  // 載入時強制重設為 0、1、2...
+  quoteItems.forEach((item, i) => {
+    item.display_order = i;
+    const qty = item.quantity || 0;
+    const price = item.unit_price || 0;
+    item.subtotal = Number((qty * price).toFixed(2));
+  });
+
   renderQuoteItems();
   calculateTotal();
   document.getElementById('editPanel').classList.remove('d-none');
@@ -310,8 +318,6 @@ function renderQuoteItems() {
   document.getElementById('quoteItemsList').innerHTML = html;
 }
 
-// function addQuoteItem() { productModal.show(); }
-
 function filterProducts() {
   const kw = document.getElementById('productSearchInput').value.toLowerCase();
   const filtered = allProducts.filter(p => p.product_name.toLowerCase().includes(kw));
@@ -335,15 +341,18 @@ function renderProductList(products) {
 
 async function selectProduct(pid) {
   const p = allProducts.find(x => x.id === pid);
+  const qty = 1;
+  const unitPrice = p.sale_price || 0;
   const newItem = {
     quotation_id: currentQuoteId,
     product_id: p.id,
     product_name: p.product_name,
     unit: p.unit,
-    quantity: 1,
+    quantity: qty,
     cost: p.cost,
-    unit_price: p.sale_price,
-    display_order: quoteItems.length + 1
+    unit_price: unitPrice,
+    display_order: quoteItems.length, // 改為 length，從0開始
+    subtotal: Number((qty * unitPrice).toFixed(2))
   };
 
   const { data } = await sb.from("quotation_items").insert([newItem]).select();
@@ -353,7 +362,13 @@ async function selectProduct(pid) {
 
 function updateItemValue(idx, field, val) {
   quoteItems[idx][field] = parseFloat(val) || 0;
-  renderQuoteItems(); calculateTotal();
+  // 即時計算該筆明細 subtotal = 數量 * 單價
+  const qty = quoteItems[idx].quantity || 0;
+  const price = quoteItems[idx].unit_price || 0;
+  quoteItems[idx].subtotal = qty * price; 
+
+  renderQuoteItems();
+  calculateTotal();
 }
 
 async function deleteQuoteItem(idx) {
@@ -361,7 +376,8 @@ async function deleteQuoteItem(idx) {
   const item = quoteItems[idx];
   if (item.id) await sb.from("quotation_items").delete().eq("id", item.id);
   quoteItems.splice(idx, 1);
-  quoteItems.forEach((it, i) => it.display_order = i + 1);
+  // 改用陣列索引做 display_order，從0開始
+  quoteItems.forEach((it, i) => it.display_order = i);
   renderQuoteItems(); calculateTotal();
 }
 
@@ -372,7 +388,8 @@ function drop(tar) {
   const item = quoteItems[dragIdx];
   quoteItems.splice(dragIdx, 1);
   quoteItems.splice(tar, 0, item);
-  quoteItems.forEach((it, i) => it.display_order = i + 1);
+  // 按索引重新排序，從0開始
+  quoteItems.forEach((it, i) => it.display_order = i);
   renderQuoteItems();
 }
 
@@ -381,13 +398,13 @@ async function saveQuoteItemSort() {
     await sb.from("quotation_items").update({
       display_order: it.display_order,
       quantity: it.quantity,
-      unit_price: it.unit_price
+      unit_price: it.unit_price,
+      subtotal: it.subtotal // 重點：將小計回存資料庫
     }).eq("id", it.id);
   }
-  //alert("排序與數值已儲存");
 }
 
-// 自動計算：總成本 / 總銷售 / 總利潤
+// 自動計算：總成本 / 總銷售 / 總利潤 → 新增返回總銷售金額
 function calculateTotal() {
   let totalCost = 0;
   let totalPrice = 0;
@@ -396,6 +413,7 @@ function calculateTotal() {
     const qty = item.quantity || 0;
     const cost = item.cost || 0;
     const price = item.unit_price || 0;
+item.subtotal = qty * price;
     totalCost += qty * cost;
     totalPrice += qty * price;
   });
@@ -404,19 +422,33 @@ function calculateTotal() {
   document.getElementById('totalCost').textContent = money(totalCost);
   document.getElementById('totalPrice').textContent = money(totalPrice);
   document.getElementById('totalProfit').textContent = money(totalProfit);
+  
+  // 返回總銷售金額（供儲存使用）
+  return totalPrice;
 }
 
+// 儲存報價單 → 新增 total_amount 欄位更新
 async function saveQuote() {
+  // 計算當前報價單的總銷售金額
+  const totalAmount = calculateTotal();
+  
   const data = {
     quote_date: document.getElementById('edit_quote_date').value,
     customer_id: document.getElementById('edit_customer_id').value,
     status: document.getElementById('edit_status').value,
-    remark: document.getElementById('edit_remark').value
+    remark: document.getElementById('edit_remark').value,
+    total_amount: totalAmount // 新增：總價存入 total_amount 欄位
   };
-  await sb.from("quotations").update(data).eq("id", currentQuoteId);
-  await saveQuoteItemSort();
-  alert("儲存完成");
-  searchQuotes();
+  
+  try {
+    await sb.from("quotations").update(data).eq("id", currentQuoteId);
+    await saveQuoteItemSort();
+    alert("儲存完成");
+    searchQuotes();
+  } catch (error) {
+    alert("儲存失敗：" + error.message);
+    console.error("儲存總價錯誤：", error);
+  }
 }
 
 function hideEditPanel() {
@@ -430,9 +462,11 @@ function formatDate(s) {
   return date.toISOString().split('T')[0]; // 提取 YYYY-MM-DD 部分
 }
 
-function logout() {
-      window.close();
-    }
+// 登出
+async function logout() {
+  await sb.auth.signOut();
+  window.location.reload();
+}
 
 </script>
 </body>
