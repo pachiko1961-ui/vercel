@@ -22,6 +22,14 @@
       align-items: center;
       justify-content: center;
     }
+    .delete-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .note-cell {
       max-width: 180px;
       white-space: nowrap;
@@ -147,6 +155,7 @@
                 <th style="width: 100px;">成本</th>
                 <th style="width: 100px;">小計(Subtotal)</th>
                 <th style="width: 120px;">移動順序</th>
+                <th style="width: 60px;">操作</th> <!-- 新增操作列 -->
               </tr>
             </thead>
             <tbody id="productItems"></tbody>
@@ -228,7 +237,7 @@
     function renderProductItems() {
       let html = '';
       if (currentQuoteItems.length === 0) {
-        html = '<tr><td colspan="8" class="text-center">無商品數據</td></tr>';
+        html = '<tr><td colspan="9" class="text-center">無商品數據</td></tr>'; // 列數改為9
       } else {
         currentQuoteItems.forEach((item, index) => {
           const subtotal = calcRowSubtotal(item);
@@ -254,10 +263,21 @@
               <button class="btn btn-sm btn-secondary move-btn me-1" onclick="moveItem(${index}, 'up')" ${index === 0 ? 'disabled' : ''}>↑</button>
               <button class="btn btn-sm btn-secondary move-btn" onclick="moveItem(${index}, 'down')" ${index === currentQuoteItems.length - 1 ? 'disabled' : ''}>↓</button>
             </td>
+            <td class="text-center"> <!-- 新增刪除按鈕 -->
+              <button class="btn btn-sm btn-danger delete-btn" onclick="deleteItem(${index})">🗑️</button>
+            </td>
           </tr>`;
         });
       }
       document.getElementById('productItems').innerHTML = html;
+    }
+
+    // 新增：刪除商品明細函數
+    function deleteItem(index) {
+      if (confirm('確定要刪除這項商品嗎？')) { // 確認刪除
+        currentQuoteItems.splice(index, 1); // 從陣列移除對應索引的商品
+        renderProductItems(); // 重新渲染商品列表
+      }
     }
 
     function updateItemValue(index, field, value) {
